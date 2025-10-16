@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { generateNetworkDataset, validateNetworkDataset } from '@/lib/networkDataset'
+import * as neo4jClient from '@/lib/neo4jClient'
 
 const STORAGE_KEY = 'tmobile_network_dataset'
 
@@ -12,12 +13,46 @@ export const useNetworkDataset = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Initialize dataset from localStorage or generate new one
+  // Initialize dataset from Neo4j, localStorage, or generate new one
   useEffect(() => {
-    const initializeDataset = () => {
+    const initializeDataset = async () => {
       try {
         setLoading(true)
         setError(null)
+
+        // Try to load from Neo4j first
+        try {
+          const nodes = await neo4jClient.fetchNodes()
+          const edges = await neo4jClient.fetchEdges()
+
+          if (nodes.length > 0 || edges.length > 0) {
+            const dataset = {
+              metadata: {
+                version: '1.0',
+                created_at: new Date().toISOString(),
+                last_updated: new Date().toISOString(),
+                source: 'neo4j',
+                node_count: nodes.length,
+                edge_count: edges.length
+              },
+              nodes: nodes.map(n => ({
+                ...n,
+                alarmIds: n.alarmIds || []
+              })),
+              edges: edges.map(e => ({
+                ...e,
+                alarmIds: e.alarmIds || []
+              }))
+            }
+            setDataset(dataset)
+            // Also save to localStorage as backup
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(dataset))
+            setLoading(false)
+            return
+          }
+        } catch (neo4jError) {
+          console.warn('Neo4j unavailable, falling back to localStorage:', neo4jError.message)
+        }
 
         // Try to load from localStorage
         const stored = localStorage.getItem(STORAGE_KEY)
@@ -236,9 +271,24 @@ export const useNetworkDataset = () => {
   /**
    * Reset to default dataset
    */
-  const resetDataset = useCallback(() => {
-    const newDataset = generateNetworkDataset()
-    updateDataset(newDataset)
+  const resetDataset = useCallback(async () => {
+    try {
+      // Clear Neo4j database first
+      await fetch('http://localhost:3001/api/network-topology/clear', {
+        method: 'DELETE'
+      });
+      console.log('Neo4j database cleared');
+    } catch (err) {
+      console.warn('Could not clear Neo4j:', err.message);
+    }
+
+    // Clear localStorage
+    localStorage.removeItem(STORAGE_KEY);
+
+    // Generate new dataset
+    const newDataset = generateNetworkDataset();
+    updateDataset(newDataset);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newDataset));
   }, [updateDataset])
 
   /**
@@ -257,6 +307,64 @@ export const useNetworkDataset = () => {
     return updateDataset(updatedDataset)
   }, [dataset, updateDataset])
 
+  /**
+   * Sync dataset to Neo4j
+   */
+  const syncToNeo4j = useCallback(async () => {
+    if (!dataset) return false
+    try {
+      await neo4jClient.seedDatabase({
+        nodes: dataset.nodes,
+        edges: dataset.edges
+      })
+      setError(null)
+      return true
+    } catch (err) {
+      setError(`Failed to sync to Neo4j: ${err.message}`)
+      return false
+    }
+  }, [dataset])
+
+  /**
+   * Load dataset from Neo4j
+   */
+  const loadFromNeo4j = useCallback(async () => {
+    try {
+      setLoading(true)
+      const nodes = await neo4jClient.fetchNodes()
+      const edges = await neo4jClient.fetchEdges()
+
+      const newDataset = {
+        metadata: {
+          version: '1.0',
+          created_at: new Date().toISOString(),
+          last_updated: new Date().toISOString(),
+          source: 'neo4j',
+          node_count: nodes.length,
+          edge_count: edges.length
+        },
+        nodes: nodes.map(n => ({
+          ...n,
+          alarmIds: n.alarmIds || []
+        })),
+        edges: edges.map(e => ({
+          ...e,
+          alarmIds: e.alarmIds || []
+        }))
+      }
+
+      setDataset(newDataset)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(newDataset))
+      setError(null)
+      setLoading(false)
+      return true
+    } catch (err) {
+      setError(`Failed to load from Neo4j: ${err.message}`)
+      setLoading(false)
+      return false
+    }
+  }, [])
+
   return {
     // State
     dataset,
@@ -268,6 +376,8 @@ export const useNetworkDataset = () => {
     resetDataset,
     exportDataset,
     importDataset,
+    syncToNeo4j,
+    loadFromNeo4j,
 
     // Alarm operations
     addAlarmToNode,

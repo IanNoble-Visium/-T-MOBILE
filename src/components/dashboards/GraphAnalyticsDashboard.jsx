@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { GitBranch, Network, Zap, AlertCircle } from 'lucide-react'
 import useNetworkDataset from '@/hooks/useNetworkDataset'
 import DatasetManager from '@/components/DatasetManager'
+import NetworkTopology3D from '@/components/NetworkTopology3D'
 import { NODE_TYPES } from '@/lib/networkDataset'
 
 const GraphAnalyticsDashboard = () => {
@@ -13,6 +14,8 @@ const GraphAnalyticsDashboard = () => {
     resetDataset,
     exportDataset,
     importDataset,
+    syncToNeo4j,
+    loadFromNeo4j,
     getNodesByType,
     getAlarmedNodes,
     getAlarmedEdges
@@ -183,21 +186,25 @@ const GraphAnalyticsDashboard = () => {
           onImport={importDataset}
           onReset={resetDataset}
           onExport={exportDataset}
+          onSyncToNeo4j={syncToNeo4j}
+          onLoadFromNeo4j={loadFromNeo4j}
         />
       </div>
 
-      {/* Network Topology Visualization Placeholder */}
+      {/* Network Topology 3D Visualization */}
       <div className="bg-card rounded-lg border border-border p-6">
-        <h3 className="font-semibold mb-4">Interactive Network Topology</h3>
-        <div className="bg-background rounded-lg p-8 min-h-[500px] flex items-center justify-center">
-          <div className="text-center">
-            <GitBranch className="w-24 h-24 mx-auto mb-4 text-primary opacity-50" />
-            <h4 className="text-xl font-semibold mb-2">Network Topology Visualization</h4>
-            <p className="text-muted-foreground max-w-md">
-              Interactive graph visualization coming in Phase 3. Currently showing {dataset?.nodes?.length} nodes
-              and {dataset?.edges?.length} connections across {new Set(dataset?.nodes?.map(n => n.region)).size} regions.
-            </p>
-          </div>
+        <h3 className="font-semibold mb-4">Interactive 3D Network Topology</h3>
+        <div className="bg-black rounded-lg overflow-hidden min-h-[600px] relative">
+          {dataset?.nodes && dataset?.edges ? (
+            <NetworkTopology3D nodes={dataset.nodes} edges={dataset.edges} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center text-white">
+                <GitBranch className="w-24 h-24 mx-auto mb-4 opacity-50" />
+                <p>Loading network topology...</p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

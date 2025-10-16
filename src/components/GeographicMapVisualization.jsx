@@ -18,6 +18,12 @@ L.Icon.Default.mergeOptions({
 const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick }) => {
   const typeInfo = NODE_TYPES[node.type]
 
+  // Validate location data
+  if (!node.location || typeof node.location.lat !== 'number' || typeof node.location.lon !== 'number') {
+    console.warn('Invalid location data for node:', node.id, node.location);
+    return null;
+  }
+
   // Create custom icon
   const icon = L.divIcon({
     className: 'custom-marker',
@@ -61,9 +67,9 @@ const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick }) => {
         <div className="text-sm">
           <p className="font-bold">{node.name}</p>
           <p className="text-xs text-gray-600">{typeInfo?.label}</p>
-          <p className="text-xs text-gray-600">{node.location.city}</p>
+          <p className="text-xs text-gray-600">{node.location.city || 'Unknown'}</p>
           <p className="text-xs text-gray-600">
-            {node.location.lat.toFixed(4)}, {node.location.lon.toFixed(4)}
+            {(node.location.lat || 0).toFixed(4)}, {(node.location.lon || 0).toFixed(4)}
           </p>
           {isAlarmed && (
             <p className="text-xs text-red-600 font-semibold mt-1">⚠️ Active Alarms</p>

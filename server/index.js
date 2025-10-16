@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import dataRoutes from './routes/data.js';
 import aiRoutes from './routes/ai.js';
+import networkTopologyRoutes from './routes/network-topology.js';
+import { initializeNeo4j, closeNeo4j } from './db/neo4j.js';
 
 dotenv.config();
 
@@ -31,6 +33,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/data', dataRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/network-topology', networkTopologyRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -46,9 +49,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
+// Start server with Neo4j initialization
+async function startServer() {
+  try {
+    // Initialize Neo4j connection
+    await initializeNeo4j();
+
+    app.listen(PORT, () => {
+      console.log(`
 ╔═══════════════════════════════════════════════════════════╗
 ║  T-Mobile TruContext Demo API Server                     ║
 ║  Status: Running                                          ║
@@ -60,21 +68,34 @@ app.listen(PORT, () => {
 ║  • GET  /api/data/*                                       ║
 ║  • POST /api/ai/query                                     ║
 ║  • POST /api/ai/enhance-query                             ║
+║  • GET  /api/network-topology/*                           ║
+║  • POST /api/network-topology/*                           ║
 ║                                                           ║
-║  Database: PostgreSQL (Neon)                              ║
+║  Databases:                                               ║
+║  • PostgreSQL (Neon) - Security/Threat Data               ║
+║  • Neo4j Aura - Network Topology Data                     ║
 ║  AI: Google Gemini Pro                                    ║
 ╚═══════════════════════════════════════════════════════════╝
-  `);
-});
+      `);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
+  await closeNeo4j();
   process.exit(0);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
+  await closeNeo4j();
   process.exit(0);
 });
 
