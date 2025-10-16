@@ -19,10 +19,10 @@ This guide explains how to set up and use the new AI-powered Analytics Dashboard
 ## Setup Instructions
 
 ### 1. Environment Variables
-The `.env` file has been created with your credentials:
+Create a `.env` file in the root directory with your credentials:
 ```
-GOOGLE_API_KEY=AIzaSyCuv_PScrcDpokoWzfZX_1WDqZf-LAaaZ0
-POSTGRES_URL=postgresql://neondb_owner:npg_tms9N8MpuyaQ@ep-old-sun-ad71d9oi-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+GOOGLE_API_KEY=your_gemini_api_key_here
+POSTGRES_URL=your_postgresql_connection_string
 PORT=3001
 NODE_ENV=development
 ```

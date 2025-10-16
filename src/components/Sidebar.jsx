@@ -1,12 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { 
-  LayoutDashboard, 
-  Shield, 
-  ShieldAlert, 
-  Network, 
-  Cpu, 
+import {
+  LayoutDashboard,
+  Shield,
+  ShieldAlert,
+  Network,
+  Cpu,
   ShieldCheck,
   GitBranch,
+  MapPin,
   Target,
   Brain,
   ChevronLeft,
@@ -25,6 +26,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
     { path: '/iot', icon: Cpu, label: 'IoT Security Hub' },
     { path: '/threat-protect', icon: ShieldCheck, label: 'Threat Protect' },
     { path: '/graph-analytics', icon: GitBranch, label: 'Graph Analytics' },
+    { path: '/network-topology', icon: Network, label: 'Network Topology' },
+    { path: '/geographic-map', icon: MapPin, label: 'Geographic Map' },
     { path: '/threat-intelligence', icon: Target, label: 'Threat Intelligence' }
   ]
   

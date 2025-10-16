@@ -70,7 +70,12 @@ Provide a concise, professional explanation that:
 1. Directly answers the user's question
 2. Highlights key insights and trends
 3. Notes any security concerns or anomalies
-4. Suggests actionable next steps if relevant
+4. Suggests actionable next steps if relevant - IMPORTANT: For each actionable next step, include a confidence percentage (0-100%) based on the evidence in the data
+   - 90-100%: Strong evidence directly from the query results
+   - 75-89%: Good evidence with reasonable inferences
+   - 60-74%: Moderate evidence, some assumptions required
+   - Below 60%: Speculative or based on general best practices rather than specific data
+   Format each step as: "**[Step Name] (Confidence: XX%):** Description"
 5. Uses clear language without SQL jargon
 
 Keep the response under 300 words.`;

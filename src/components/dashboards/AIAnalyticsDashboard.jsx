@@ -1,17 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Brain, 
-  Send, 
-  Sparkles, 
+import {
+  Brain,
+  Send,
+  Sparkles,
   Loader2,
   MessageSquare,
   AlertCircle,
   TrendingUp,
   Shield,
-  Activity
+  Activity,
+  Network
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import { useNetworkAIContext } from '@/components/NetworkAIContext';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -22,21 +24,35 @@ const AIAnalyticsDashboard = () => {
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [suggestedQueries, setSuggestedQueries] = useState([]);
   const [dashboardContext, setDashboardContext] = useState(null);
+  const [networkContext, setNetworkContext] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // Get network AI context
+  const { context: networkAIContext, suggestedQueries: networkQueries, contextString } = useNetworkAIContext();
 
   // Fetch dashboard context and suggested queries on mount
   useEffect(() => {
     fetchDashboardContext();
     fetchSuggestedQueries();
-    
+
+    // Set network context when available
+    if (networkAIContext) {
+      setNetworkContext(networkAIContext);
+    }
+
+    // Combine suggested queries from both sources
+    if (networkQueries && networkQueries.length > 0) {
+      setSuggestedQueries(prev => [...(prev || []), ...networkQueries].slice(0, 8));
+    }
+
     // Add welcome message
     setMessages([{
       id: 'welcome',
       type: 'assistant',
-      content: 'Welcome to the AI-Powered Security Analytics Dashboard! I can help you query and understand your security data using natural language. Try asking me about threats, incidents, devices, or network metrics.',
+      content: 'Welcome to the AI-Powered Security Analytics Dashboard! I can help you query and understand your security data using natural language. Try asking me about threats, incidents, devices, network topology, or alarms.',
       timestamp: new Date()
     }]);
-  }, []);
+  }, [networkAIContext, networkQueries]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -97,7 +113,9 @@ const AIAnalyticsDashboard = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/ai/query`, {
         userQuery: userMessage.content,
-        dashboardContext
+        dashboardContext,
+        networkContext: networkContext || {},
+        networkContextString: contextString || ''
       });
 
       const assistantMessage = {
@@ -305,26 +323,46 @@ const AIAnalyticsDashboard = () => {
               <h3 className="font-semibold">Suggested Queries</h3>
             </div>
             <div className="space-y-4">
-              {suggestedQueries.map((category, idx) => (
-                <div key={idx}>
-                  <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
-                    {category.category === 'Threats' && <Shield className="w-4 h-4" />}
-                    {category.category === 'Overview' && <TrendingUp className="w-4 h-4" />}
-                    {category.category}
-                  </h4>
-                  <div className="space-y-2">
-                    {category.queries.map((query, qIdx) => (
+              {suggestedQueries && Array.isArray(suggestedQueries) && suggestedQueries.length > 0 ? (
+                suggestedQueries.map((item, idx) => {
+                  // Handle both old format (objects with category) and new format (strings)
+                  if (typeof item === 'string') {
+                    return (
                       <button
-                        key={qIdx}
-                        onClick={() => handleSuggestedQuery(query)}
-                        className="w-full text-left p-2 text-xs bg-background hover:bg-primary/10 rounded border border-border hover:border-primary/50 transition-colors"
+                        key={idx}
+                        onClick={() => handleSuggestedQuery(item)}
+                        className="w-full text-left px-3 py-2 rounded-lg bg-secondary/50 hover:bg-secondary text-sm transition-colors text-secondary-foreground hover:text-primary"
                       >
-                        {query}
+                        {item}
                       </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    )
+                  }
+
+                  // Old format with categories
+                  return (
+                    <div key={idx}>
+                      <h4 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-2">
+                        {item.category === 'Threats' && <Shield className="w-4 h-4" />}
+                        {item.category === 'Overview' && <TrendingUp className="w-4 h-4" />}
+                        {item.category}
+                      </h4>
+                      <div className="space-y-2">
+                        {item.queries.map((query, qIdx) => (
+                          <button
+                            key={qIdx}
+                            onClick={() => handleSuggestedQuery(query)}
+                            className="w-full text-left p-2 text-xs bg-background hover:bg-primary/10 rounded border border-border hover:border-primary/50 transition-colors"
+                          >
+                            {query}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <p className="text-sm text-muted-foreground">No suggested queries available</p>
+              )}
             </div>
           </div>
         </div>

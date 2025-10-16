@@ -14,6 +14,8 @@ import TPlatformDashboard from './components/dashboards/TPlatformDashboard'
 import IoTDashboard from './components/dashboards/IoTDashboard'
 import ThreatProtectDashboard from './components/dashboards/ThreatProtectDashboard'
 import GraphAnalyticsDashboard from './components/dashboards/GraphAnalyticsDashboard'
+import NetworkTopologyDashboard from './components/dashboards/NetworkTopologyDashboard'
+import GeographicMapDashboard from './components/dashboards/GeographicMapDashboard'
 import ThreatIntelligenceDashboard from './components/dashboards/ThreatIntelligenceDashboard'
 import AIAnalyticsDashboard from './components/dashboards/AIAnalyticsDashboard'
 
@@ -38,6 +40,8 @@ function App() {
               <Route path="/iot" element={<IoTDashboard />} />
               <Route path="/threat-protect" element={<ThreatProtectDashboard />} />
               <Route path="/graph-analytics" element={<GraphAnalyticsDashboard />} />
+              <Route path="/network-topology" element={<NetworkTopologyDashboard />} />
+              <Route path="/geographic-map" element={<GeographicMapDashboard />} />
               <Route path="/threat-intelligence" element={<ThreatIntelligenceDashboard />} />
               <Route path="/ai-analytics" element={<AIAnalyticsDashboard />} />
             </Routes>
