@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   GitBranch,
   Target,
+  Brain,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -17,6 +18,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
   
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Executive Dashboard' },
+    { path: '/ai-analytics', icon: Brain, label: 'AI Analytics' },
     { path: '/sase', icon: Shield, label: 'SASE Platform' },
     { path: '/cyber-defense', icon: ShieldAlert, label: 'Cyber Defense Center' },
     { path: '/t-platform', icon: Network, label: 'T-Platform' },
@@ -109,4 +111,3 @@ const Sidebar = ({ isOpen, onToggle }) => {
 }
 
 export default Sidebar
-
