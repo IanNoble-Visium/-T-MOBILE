@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react'
-import { Network, AlertCircle, Filter, X } from 'lucide-react'
+import { Network, AlertCircle, Filter, X, Box, Map } from 'lucide-react'
 import useNetworkDataset from '@/hooks/useNetworkDataset'
 import useAlarmSystem from '@/hooks/useAlarmSystem'
 import NetworkTopologyVisualization from '@/components/NetworkTopologyVisualization'
+import NetworkTopology3D from '@/components/NetworkTopology3D'
 import NetworkNodeDetail from '@/components/NetworkNodeDetail'
 import AlarmDashboard from '@/components/AlarmDashboard'
 import { NODE_TYPES } from '@/lib/networkDataset'
@@ -44,6 +45,7 @@ const NetworkTopologyDashboard = () => {
   const [filterSeverity, setFilterSeverity] = useState(null)
   const [showAlarmPanel, setShowAlarmPanel] = useState(true)
   const [layout, setLayout] = useState('force')
+  const [view3D, setView3D] = useState(false)
 
   if (loading) {
     return (
@@ -228,41 +230,66 @@ const NetworkTopologyDashboard = () => {
       <div className="bg-card rounded-lg border border-border p-4">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Network Graph</h3>
-          <button
-            onClick={() => setShowAlarmPanel(!showAlarmPanel)}
-            className="text-sm px-3 py-1 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 transition-colors"
-          >
-            {showAlarmPanel ? 'Hide' : 'Show'} Alarms
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setView3D(!view3D)}
+              className={`text-sm px-3 py-1 rounded flex items-center gap-2 transition-colors ${
+                view3D
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/90'
+              }`}
+            >
+              {view3D ? <Box className="w-4 h-4" /> : <Map className="w-4 h-4" />}
+              {view3D ? '3D View' : '2D View'}
+            </button>
+            <button
+              onClick={() => setShowAlarmPanel(!showAlarmPanel)}
+              className="text-sm px-3 py-1 bg-secondary text-secondary-foreground rounded hover:bg-secondary/90 transition-colors"
+            >
+              {showAlarmPanel ? 'Hide' : 'Show'} Alarms
+            </button>
+          </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="lg:col-span-2 h-[600px] rounded-lg overflow-hidden">
-            <NetworkTopologyVisualization
+
+        {/* 3D View - Full Width and Height */}
+        {view3D ? (
+          <div className="h-[calc(100vh-400px)] min-h-[800px] rounded-lg overflow-hidden border border-border">
+            <NetworkTopology3D
               nodes={filteredNodes}
               edges={filteredEdges}
-              onNodeClick={handleNodeClick}
-              onEdgeClick={handleEdgeClick}
-              selectedNodeId={selectedNode?.id}
-              selectedEdgeId={selectedEdge?.id}
-              alarmedNodeIds={alarmedNodeIds}
-              alarmedEdgeIds={alarmedEdgeIds}
-              layout={layout}
             />
           </div>
-          {showAlarmPanel && (
-            <div className="h-[600px] overflow-hidden">
-              <AlarmDashboard
-                alarms={alarms}
-                onResolveAlarm={resolveAlarm}
-                onRemoveAlarm={removeAlarm}
-                onResolveAll={resolveAllAlarms}
-                onClearAll={clearAllAlarms}
-                filterSeverity={filterSeverity}
-                onFilterChange={setFilterSeverity}
+        ) : (
+          /* 2D View - with Alarm Panel */
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 h-[600px] rounded-lg overflow-hidden">
+              <NetworkTopologyVisualization
+                nodes={filteredNodes}
+                edges={filteredEdges}
+                onNodeClick={handleNodeClick}
+                onEdgeClick={handleEdgeClick}
+                selectedNodeId={selectedNode?.id}
+                selectedEdgeId={selectedEdge?.id}
+                alarmedNodeIds={alarmedNodeIds}
+                alarmedEdgeIds={alarmedEdgeIds}
+                layout={layout}
               />
             </div>
-          )}
-        </div>
+            {showAlarmPanel && (
+              <div className="h-[600px] overflow-hidden">
+                <AlarmDashboard
+                  alarms={alarms}
+                  onResolveAlarm={resolveAlarm}
+                  onRemoveAlarm={removeAlarm}
+                  onResolveAll={resolveAllAlarms}
+                  onClearAll={clearAllAlarms}
+                  filterSeverity={filterSeverity}
+                  onFilterChange={setFilterSeverity}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Legend */}
