@@ -114,6 +114,14 @@ This demo application presents a unified security operations platform that combi
   - Performance tab with efficiency, accuracy, response time
   - Configuration tab with prompt templates and integrations
   - Activity tab with recent actions timeline
+  - **Actions**: Pause / Resume / Deactivate with AlertDialog confirmations and toast feedback. Actions are disabled when the agent is deactivated.
+  - **Edit Configuration**: Inline dialog with editable fields — Name, Nickname, Type, Model, Prompt Template, Priority (high/medium/low), Max Tokens. Uses proper labels and ARIA for accessibility.
+  - **Performance Reset**: Optional checkbox in the Performance section — "Reset performance counters to zero". When checked and saved, Findings, Alerts Raised, and Token Usage are reset to 0. Toast: "Configuration updated and counters reset".
+- **Agent Search & Filters**
+  - Keyboard shortcut: **Ctrl/Cmd + K** focuses the search input.
+  - Filters: Status, Type, Model, Performance Level.
+  - Logic: Filters and search use AND semantics — only agents matching all criteria are shown.
+  - Indicator: "N filters active" badge (TruContext Blue `#0066CC`) appears near the search when any filter or search is active.
 - **Live Performance Metrics** - Real-time KPI cards
   - Active Agents count with idle agent tracking
   - Threats Detected (24h) with critical incident count
@@ -131,6 +139,15 @@ This demo application presents a unified security operations platform that combi
   - Auto-updating every 3 seconds
 - **Agent Collaboration** - Multi-agent analysis tracking
 - **Training Scenarios** - Agent training and simulation management
+
+**Usage Instructions**
+- Open any agent card and click **View Details** to access the Agent Detail Modal.
+- Use **Pause/Resume/Deactivate** actions as needed. Confirm in the AlertDialog; look for success toasts.
+- Click **Edit Configuration** to change Name, Nickname, Type, Model, Prompt Template, Priority, and Max Tokens.
+  - To reset historical counters, check **Reset performance counters to zero**, then click Save.
+- Press **Ctrl/Cmd + K** to focus search; type keywords to filter agents by name/model.
+- Combine filters (Status, Type, Model, Performance) for precise results; the blue badge shows how many filters are active.
+- Clear the search text and set filters to "All" to return to the full agent list.
 
 ## Technology Stack
 
@@ -202,13 +219,13 @@ The **AI Analytics Dashboard** uses Google Gemini AI to:
 ```
 User: "What's happening?"
 ↓ (Click ✨ to enhance)
-Enhanced: "What's happening with our security posture? Include current 
-threat levels (2,847 detected, 2,721 blocked), active incidents (8), 
+Enhanced: "What's happening with our security posture? Include current
+threat levels (2,847 detected, 2,721 blocked), active incidents (8),
 network health (96%), and any critical alerts."
 ↓ (AI generates SQL)
 SQL: "SELECT * FROM kpi_metrics ORDER BY timestamp DESC LIMIT 1..."
 ↓ (Execute & explain)
-AI Response: "Your security posture is strong. We've detected 2,847 
+AI Response: "Your security posture is strong. We've detected 2,847
 threats in the last 24 hours and successfully blocked 2,721 of them..."
 ```
 
@@ -354,6 +371,27 @@ All critical issues have been resolved to ensure a flawless demo experience:
 - All features working correctly
 - Smooth user experience
 - Production-ready performance
+
+
+### October 17, 2025 - AI Agents Dashboard Enhancements
+
+- Agent Detail Modal actions with confirmation dialogs (Pause / Resume / Deactivate)
+- Edit Configuration dialog expanded:
+  - Agent Identity: Name, Nickname, Type, Model
+  - Configuration: Prompt Template, Priority, Max Tokens
+  - Performance: Reset performance counters (checkbox)
+- Agent search with keyboard shortcut (Ctrl/Cmd+K)
+- Multi-filter system (status, type, model, performance level) with AND logic
+- "N filters active" badge indicator styled in TruContext Blue (#0066CC)
+- Toast notifications for all actions (Sonner)
+- Accessibility improvements (ARIA labels, keyboard navigation, focus management)
+
+Usage tips:
+- Press Ctrl/Cmd+K to focus the agent search input
+- Apply filters to narrow results; the blue badge shows the active filter count
+- Open an agent and use Pause/Resume/Deactivate; confirmations will appear
+- In Edit Configuration, update identity/config fields and optionally check "Reset performance counters to zero"; Save to apply
+- You’ll see "Configuration updated" or "Configuration updated and counters reset" toasts accordingly
 
 ### October 2025 - Threat Protect Dashboard Enhancement
 
@@ -615,14 +653,17 @@ To connect this demo to live T-Mobile systems:
    - Emphasize cost savings and network health
 
 2. **Demo the AI Agents Dashboard** 🤖 (NEW - High Impact!)
-   - Show 40 AI agents actively monitoring the network
+   - Start with the grid: highlight performance indicators (🟢 High, 🟡 Average, 🔴 Needs Attention)
+   - Press **Ctrl/Cmd + K** to focus search; demonstrate narrowing results quickly
+   - Apply multiple filters (Status, Type, Model, Performance) and explain AND logic
+   - Point out the blue "N filters active" badge near search; clear filters to reset the grid
    - Click "View Details" on an agent to open the comprehensive modal
-   - Navigate through the 4 tabs (Overview, Performance, Configuration, Activity)
-   - Demonstrate the Agent Wizard Creator (6-step process)
-   - Browse the Agent Marketplace and deploy a template
-   - Highlight real-time updates (agents update every 3 seconds)
-   - Show performance indicators (🟢 High, 🟡 Average, 🔴 Needs Attention)
-   - Emphasize the activity feed with live threat detection
+   - Show actions: **Pause / Resume / Deactivate** with AlertDialog confirmations and toast feedback
+   - Open **Edit Configuration** and highlight fields: Name, Nickname, Type, Model, Prompt, Priority, Max Tokens
+   - Check **Reset performance counters to zero** and Save; point out the "Configuration updated and counters reset" toast
+   - Navigate through tabs (Overview, Performance, Configuration, Activity) and call out key insights
+   - Demonstrate the Agent Wizard Creator (6-step process) and Agent Marketplace templates as time allows
+   - Emphasize live updates (every ~3 seconds) and the activity feed with real detections
 
 3. **Demo the AI Analytics Dashboard** to showcase natural language intelligence
    - Ask: "Show me all critical threats from the last 24 hours"
@@ -668,6 +709,38 @@ To connect this demo to live T-Mobile systems:
 - **PostgreSQL Database Integration**: Production-ready data architecture
 - **Google Gemini AI**: Latest AI technology for intelligent analysis
 - **Zero Console Errors**: Production-ready, fully tested application
+
+## Best Practices & Recommendations
+
+- Using search and filters effectively
+  - Press Ctrl/Cmd + K to focus search and quickly narrow results
+  - Combine Status, Type, Model, and Performance filters; logic is AND, so only exact matches remain
+  - Watch the blue "N filters active" badge to understand how many criteria are applied
+  - Clear the search text and set filters to "All" to reset the grid
+
+- Managing AI agents (pause vs. deactivate)
+  - Pause: temporarily stop an agent from processing while preserving its configuration; use when performing short maintenance or analysis
+  - Resume: return a paused agent to normal operation
+  - Deactivate: fully disable the agent and its actions; all controls are disabled until reactivated; use for long-term offboarding or when an agent should not run
+
+- Configuring agent parameters
+  - Prompt Template: keep instructions concise, scoped to the agent’s role and data sources; avoid overly broad prompts
+  - Priority: high (aggressive, faster response), medium (balanced), low (background tasks)
+  - Max Tokens: higher values allow longer responses but may increase latency; tune per model and use case
+
+- Keyboard shortcuts and accessibility
+  - Ctrl/Cmd + K moves focus to the dashboard search
+  - All dialog controls and form inputs are labeled (htmlFor + ARIA); keyboard navigation and focus management are supported
+
+- Performance optimization tips
+  - Use filters to reduce the number of rendered agents when demoing on low-power machines
+  - Close modals when not in use; avoid unnecessary re-renders by batching configuration changes before saving
+
+- Interpreting performance indicators
+  - 🟢 High: efficient, accurate, and responsive
+  - 🟡 Average: monitor; consider adjusting priority or refining the prompt
+  - 🔴 Needs Attention: review recent activity, consider pausing and updating configuration
+
 
 ## License
 
