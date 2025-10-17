@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   GitBranch,
   Target,
+  Bot,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -23,7 +24,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
     { path: '/iot', icon: Cpu, label: 'IoT Security Hub' },
     { path: '/threat-protect', icon: ShieldCheck, label: 'Threat Protect' },
     { path: '/graph-analytics', icon: GitBranch, label: 'Graph Analytics' },
-    { path: '/threat-intelligence', icon: Target, label: 'Threat Intelligence' }
+    { path: '/threat-intelligence', icon: Target, label: 'Threat Intelligence' },
+    { path: '/ai-agents', icon: Bot, label: 'AI Agents' }
   ]
   
   return (

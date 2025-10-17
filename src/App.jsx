@@ -15,6 +15,7 @@ import IoTDashboard from './components/dashboards/IoTDashboard'
 import ThreatProtectDashboard from './components/dashboards/ThreatProtectDashboard'
 import GraphAnalyticsDashboard from './components/dashboards/GraphAnalyticsDashboard'
 import ThreatIntelligenceDashboard from './components/dashboards/ThreatIntelligenceDashboard'
+import AIAgentDashboard from './components/dashboards/AIAgentDashboard'
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -38,6 +39,7 @@ function App() {
               <Route path="/threat-protect" element={<ThreatProtectDashboard />} />
               <Route path="/graph-analytics" element={<GraphAnalyticsDashboard />} />
               <Route path="/threat-intelligence" element={<ThreatIntelligenceDashboard />} />
+              <Route path="/ai-agents" element={<AIAgentDashboard />} />
             </Routes>
           </main>
         </div>
