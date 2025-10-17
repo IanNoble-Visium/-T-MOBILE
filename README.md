@@ -14,6 +14,14 @@ This demo application presents a unified security operations platform that combi
 
 ## Features
 
+### Header & Navigation (NEW - October 17, 2025)
+- **Functional Search Bar** - Real-time filtering across dashboard content
+- **Alarm Notifications** - Interactive dropdown showing active alarms with severity indicators
+- **User Profile Menu** - Quick access to preferences and logout
+- **User Preferences Modal** - Theme selection, notification settings, default dashboard
+- **Settings Panel** - Data source configuration, auto-refresh, layout preferences
+- **Cross-Dashboard Integration** - Consistent search and notifications across all screens
+
 ### Executive Dashboard
 - Real-time KPIs and security metrics
 - Competitive advantage analysis (vs. Verizon, AT&T)
@@ -169,15 +177,15 @@ threats in the last 24 hours and successfully blocked 2,721 of them..."
 
 **Note**: Mock data generators are still available in `src/lib/mockData.js` for reference, but all dashboards can now optionally use live database data.
 
-## Installation
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
-- pnpm package manager
+- pnpm package manager (recommended) or npm
 - PostgreSQL database (Neon account) - optional for AI features
 - Google Gemini API key - optional for AI features
 
-### Setup
+### Installation & Running
 
 1. **Install dependencies**
 ```bash
@@ -194,13 +202,7 @@ PORT=3001
 NODE_ENV=development
 ```
 
-3. **Database Setup (Optional - for AI features)**
-```bash
-# Run database migration to create tables and populate with sample data
-node server/db/migrate.js
-```
-
-4. **Run the Application**
+3. **Run the Application**
 
 **Option A: Frontend + Backend together**
 ```bash
@@ -216,10 +218,9 @@ pnpm run server:dev
 pnpm run dev
 ```
 
-5. **Access the Application**
+4. **Access the Application**
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:3001 (if running backend)
-- AI Analytics: Navigate to "AI Analytics" in sidebar
 
 ### Build for Production
 ```bash
@@ -229,6 +230,29 @@ pnpm run build
 # Preview production build
 pnpm run preview
 ```
+
+For detailed setup instructions, see [Quick Start Guide](docs/guides/QUICK_START.md).
+
+## Documentation
+
+For detailed documentation, guides, and technical references, see the [docs/](docs/) folder:
+
+### Guides
+- [Quick Start Guide](docs/guides/QUICK_START.md) - Installation and basic setup
+- [Presentation Guide](docs/guides/PRESENTATION_GUIDE.md) - Tips for presenting the demo
+- [AI Analytics Setup](docs/guides/AI_ANALYTICS_SETUP.md) - AI features configuration
+- [Network Topology Guide](docs/guides/NETWORK_TOPOLOGY_GUIDE.md) - Network visualization features
+
+### Technical Documentation
+- [Neo4j Integration](docs/technical/NEO4J_INTEGRATION.md) - Neo4j database integration
+- [Neo4j Testing](docs/technical/NEO4J_TESTING.md) - Testing Neo4j features
+- [Network Topology Implementation](docs/technical/NETWORK_TOPOLOGY_IMPLEMENTATION.md) - Implementation details
+- [Implementation Summary](docs/technical/IMPLEMENTATION_SUMMARY.md) - Complete implementation overview
+- [AI Confidence Scores](docs/technical/AI_CONFIDENCE_SCORES.md) - AI model confidence metrics
+
+### Security
+- [Security Remediation Report](SECURITY_REMEDIATION_REPORT.md) - Security incident details
+- [Immediate Actions Required](IMMEDIATE_ACTION_REQUIRED.md) - Critical security actions
 
 ## Deployment
 
@@ -474,6 +498,23 @@ To connect this demo to live T-Mobile systems:
 7. **AI Intelligence**: Natural language querying makes security data accessible to everyone
 8. **Context Awareness**: AI-powered query enhancement provides deeper insights
 9. **Immersive Visualization**: Cutting-edge 3D network topology with cyberpunk aesthetics
+
+## Documentation
+
+### Header Features & Navigation
+- **[Header Enhancements Guide](docs/guides/HEADER_ENHANCEMENTS.md)** - Comprehensive guide to all header features
+- **[Quick Reference](docs/guides/HEADER_QUICK_REFERENCE.md)** - Quick lookup for header features and shortcuts
+- **[Testing Guide](docs/guides/TESTING_HEADER_FEATURES.md)** - Complete testing checklist for all header features
+- **[Search Implementation](docs/guides/IMPLEMENTING_SEARCH_IN_DASHBOARDS.md)** - How to add search to your dashboard
+
+### Technical Documentation
+- **[Neo4j Integration](docs/technical/NEO4J_INTEGRATION.md)** - Database integration details
+- **[Architecture Overview](docs/technical/ARCHITECTURE.md)** - System architecture and design patterns
+- **[API Reference](docs/technical/API_REFERENCE.md)** - Backend API endpoints
+
+### Implementation Guides
+- **[Network Topology Implementation](docs/guides/NETWORK_TOPOLOGY_GUIDE.md)** - Network visualization setup
+- **[AI Analytics Setup](docs/guides/AI_ANALYTICS_SETUP.md)** - AI integration guide
 
 ## Presentation Tips
 

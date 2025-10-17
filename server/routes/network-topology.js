@@ -247,21 +247,34 @@ router.post('/seed', async (req, res) => {
     }
 
     // Normalize nodes - ensure all required properties exist
-    const normalizedNodes = nodes.map(n => ({
-      id: n.id || `node-${Math.random()}`,
-      name: n.name || 'Unknown',
-      type: n.type || 'router',
-      status: n.status || 'active',
-      location: n.location || 'Unknown',
-      region: n.region || 'unknown',
-      capacity: n.capacity || 0,
-      vendor: n.vendor || 'Unknown',
-      model: n.model || 'Unknown',
-      uptime: n.uptime || 0,
-      coverage_radius: n.coverage_radius || 0,
-      latitude: n.latitude || 0,
-      longitude: n.longitude || 0
-    }));
+    const normalizedNodes = nodes.map(n => {
+      // Handle location object from frontend (has lat, lon, city)
+      let location = n.location;
+      let latitude = n.latitude || 0;
+      let longitude = n.longitude || 0;
+
+      if (typeof n.location === 'object' && n.location !== null) {
+        latitude = n.location.lat || latitude;
+        longitude = n.location.lon || longitude;
+        location = n.location.city || 'Unknown';
+      }
+
+      return {
+        id: n.id || `node-${Math.random()}`,
+        name: n.name || 'Unknown',
+        type: n.type || 'router',
+        status: n.status || 'active',
+        location: location || 'Unknown',
+        region: n.region || 'unknown',
+        capacity: n.capacity || 0,
+        vendor: n.vendor || 'Unknown',
+        model: n.model || 'Unknown',
+        uptime: n.uptime || 0,
+        coverage_radius: n.coverage_radius || 0,
+        latitude: latitude,
+        longitude: longitude
+      };
+    });
 
     // Normalize edges - ensure all required properties exist
     const normalizedEdges = edges.map(e => ({

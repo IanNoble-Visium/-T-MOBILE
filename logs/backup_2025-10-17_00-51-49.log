@@ -1,0 +1,166 @@
+2025-10-17 00:51:49,516 - INFO - Using exclusion rules from .gitignore (takes precedence over .env)
+2025-10-17 00:51:49,516 - INFO - Starting backup of C:/Dat/@Scripts/@T-MOBILE
+2025-10-17 00:51:49,517 - INFO - Excluded directories: C:/Dat/@Scripts/@T-MOBILE/.next, C:/Dat/@Scripts/@T-MOBILE/node_modules, C:/Dat/@Scripts/@T-MOBILE/.git, C:/Dat/@Scripts/@T-MOBILE/logs
+2025-10-17 00:51:49,517 - INFO - Excluded files: node_modules, .env
+2025-10-17 00:51:49,517 - INFO - Creating backup file: C:/Dat/@Scripts/@OLD/@T-MOBILE_2025-10-17_00-51-49_BEFOREMANISREPOLIT.zip
+2025-10-17 00:51:49,519 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\.git (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/.git)
+2025-10-17 00:51:49,522 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\logs (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/logs)
+2025-10-17 00:51:49,522 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\node_modules (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/node_modules)
+2025-10-17 00:51:49,523 - INFO - Excluding file: C:/Dat/@Scripts/@T-MOBILE\.env (matches pattern: .env)
+2025-10-17 00:51:49,532 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\.git (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/.git)
+2025-10-17 00:51:49,532 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\logs (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/logs)
+2025-10-17 00:51:49,532 - INFO - Excluding directory: C:/Dat/@Scripts/@T-MOBILE\node_modules (matches exclusion rule: C:/Dat/@Scripts/@T-MOBILE/node_modules)
+2025-10-17 00:51:49,533 - INFO - Excluding file: C:/Dat/@Scripts/@T-MOBILE\.env (matches pattern: .env)
+2025-10-17 00:51:49,533 - INFO - [0.7%] Adding: .env.example
+2025-10-17 00:51:49,536 - INFO - [1.3%] Adding: .gitignore
+2025-10-17 00:51:49,539 - INFO - [2.0%] Adding: .manus-template-version
+2025-10-17 00:51:49,540 - INFO - [2.7%] Adding: AI_ANALYTICS_SETUP.md
+2025-10-17 00:51:49,542 - INFO - [3.3%] Adding: AI_CONFIDENCE_SCORES.md
+2025-10-17 00:51:49,544 - INFO - [4.0%] Adding: backup.bat
+2025-10-17 00:51:49,545 - INFO - [4.7%] Adding: components.json
+2025-10-17 00:51:49,546 - INFO - [5.3%] Adding: DATA_NORMALIZATION_FIX.md
+2025-10-17 00:51:49,549 - INFO - [6.0%] Adding: DOCUMENTATION_CONSOLIDATION_PLAN.md
+2025-10-17 00:51:49,551 - INFO - [6.7%] Adding: DUPLICATE_KEY_FIX.md
+2025-10-17 00:51:49,554 - INFO - [7.3%] Adding: eslint.config.js
+2025-10-17 00:51:49,555 - INFO - [8.0%] Adding: IMMEDIATE_ACTION_REQUIRED.md
+2025-10-17 00:51:49,558 - INFO - [8.7%] Adding: IMPLEMENTATION_COMPLETE.md
+2025-10-17 00:51:49,560 - INFO - [9.3%] Adding: index.html
+2025-10-17 00:51:49,561 - INFO - [10.0%] Adding: jsconfig.json
+2025-10-17 00:51:49,562 - INFO - [10.7%] Adding: NEO4J_BUGFIX_SUMMARY.md
+2025-10-17 00:51:49,563 - INFO - [11.3%] Adding: NEO4J_IMPLEMENTATION_COMPLETE.md
+2025-10-17 00:51:49,564 - INFO - [12.0%] Adding: NEO4J_INTEGRATION_PLAN.md
+2025-10-17 00:51:49,565 - INFO - [12.7%] Adding: NEO4J_TESTING_GUIDE.md
+2025-10-17 00:51:49,566 - INFO - [13.3%] Adding: NETWORK_TOPOLOGY_ENHANCEMENTS.md
+2025-10-17 00:51:49,567 - INFO - [14.0%] Adding: NETWORK_TOPOLOGY_IMPLEMENTATION_PLAN.md
+2025-10-17 00:51:49,567 - INFO - [14.7%] Adding: package.json
+2025-10-17 00:51:49,570 - INFO - [15.3%] Adding: pnpm-lock.yaml
+2025-10-17 00:51:49,580 - INFO - [16.0%] Adding: PRESENTATION_GUIDE.md
+2025-10-17 00:51:49,581 - INFO - [16.7%] Adding: Quick Start Guide - T-Mobile TruContext Demo.md
+2025-10-17 00:51:49,583 - INFO - [17.3%] Adding: QUICK_START.md
+2025-10-17 00:51:49,584 - INFO - [18.0%] Adding: README.md
+2025-10-17 00:51:49,586 - INFO - [18.7%] Adding: RESET_DATASET_FIX.md
+2025-10-17 00:51:49,587 - INFO - [19.3%] Adding: SECURITY_REMEDIATION_REPORT.md
+2025-10-17 00:51:49,588 - INFO - [20.0%] Adding: vite.config.js
+2025-10-17 00:51:49,590 - INFO - [20.7%] Adding: VITE_OPTIMIZATION_FIX.md
+2025-10-17 00:51:49,592 - INFO - [21.3%] Adding: docs\T-Mobile + TruContext Demo Application Architecture.md
+2025-10-17 00:51:49,593 - INFO - [22.0%] Adding: docs\T-Mobile and TruContext Smart City collaboration.docx
+2025-10-17 00:51:49,596 - INFO - [22.7%] Adding: docs\T-Mobile Demo Application Requirements Summary.md
+2025-10-17 00:51:49,597 - INFO - [23.3%] Adding: docs\T-Mobile Ecosystem Research Findings.md
+2025-10-17 00:51:49,599 - INFO - [24.0%] Adding: docs\T-Mobile TruContext Demo - Presentation Guide.md
+2025-10-17 00:51:49,600 - INFO - [24.7%] Adding: docs\TMOBLE - DEMO - INITIAL PROMPT.docx
+2025-10-17 00:51:49,602 - INFO - [25.3%] Adding: docs\Veo 3.1 Video Generation Prompts for T-Mobile TruContext Demo.md
+2025-10-17 00:51:49,604 - INFO - [26.0%] Adding: public\favicon.ico
+2025-10-17 00:51:49,607 - INFO - [26.7%] Adding: public\favicon.png
+2025-10-17 00:51:49,610 - INFO - [27.3%] Adding: server\index.js
+2025-10-17 00:51:49,612 - INFO - [28.0%] Adding: server\db\connection.js
+2025-10-17 00:51:49,613 - INFO - [28.7%] Adding: server\db\migrate.js
+2025-10-17 00:51:49,614 - INFO - [29.3%] Adding: server\db\neo4j.js
+2025-10-17 00:51:49,615 - INFO - [30.0%] Adding: server\db\schema.sql
+2025-10-17 00:51:49,617 - INFO - [30.7%] Adding: server\routes\ai.js
+2025-10-17 00:51:49,618 - INFO - [31.3%] Adding: server\routes\data.js
+2025-10-17 00:51:49,619 - INFO - [32.0%] Adding: server\routes\network-topology.js
+2025-10-17 00:51:49,621 - INFO - [32.7%] Adding: server\services\gemini.js
+2025-10-17 00:51:49,622 - INFO - [33.3%] Adding: server\services\neo4j-queries.js
+2025-10-17 00:51:49,623 - INFO - [34.0%] Adding: src\App.css
+2025-10-17 00:51:49,624 - INFO - [34.7%] Adding: src\App.jsx
+2025-10-17 00:51:49,625 - INFO - [35.3%] Adding: src\index.css
+2025-10-17 00:51:49,627 - INFO - [36.0%] Adding: src\main.jsx
+2025-10-17 00:51:49,627 - INFO - [36.7%] Adding: src\assets\react.svg
+2025-10-17 00:51:49,628 - INFO - [37.3%] Adding: src\components\AlarmDashboard.jsx
+2025-10-17 00:51:49,629 - INFO - [38.0%] Adding: src\components\DatasetManager.jsx
+2025-10-17 00:51:49,630 - INFO - [38.7%] Adding: src\components\GeographicMapVisualization.jsx
+2025-10-17 00:51:49,631 - INFO - [39.3%] Adding: src\components\Header.jsx
+2025-10-17 00:51:49,637 - INFO - [40.0%] Adding: src\components\KPICard.jsx
+2025-10-17 00:51:49,640 - INFO - [40.7%] Adding: src\components\LoginPage.jsx
+2025-10-17 00:51:49,642 - INFO - [41.3%] Adding: src\components\NetworkAIContext.jsx
+2025-10-17 00:51:49,643 - INFO - [42.0%] Adding: src\components\NetworkNodeDetail.jsx
+2025-10-17 00:51:49,645 - INFO - [42.7%] Adding: src\components\NetworkTopology3D.jsx
+2025-10-17 00:51:49,647 - INFO - [43.3%] Adding: src\components\NetworkTopologyVisualization.jsx
+2025-10-17 00:51:49,650 - INFO - [44.0%] Adding: src\components\Sidebar.jsx
+2025-10-17 00:51:49,653 - INFO - [44.7%] Adding: src\components\VideoBackground.jsx
+2025-10-17 00:51:49,655 - INFO - [45.3%] Adding: src\components\dashboards\AIAnalyticsDashboard.jsx
+2025-10-17 00:51:49,657 - INFO - [46.0%] Adding: src\components\dashboards\CyberDefenseDashboard.jsx
+2025-10-17 00:51:49,659 - INFO - [46.7%] Adding: src\components\dashboards\ExecutiveDashboard.jsx
+2025-10-17 00:51:49,660 - INFO - [47.3%] Adding: src\components\dashboards\GeographicMapDashboard.jsx
+2025-10-17 00:51:49,661 - INFO - [48.0%] Adding: src\components\dashboards\GraphAnalyticsDashboard.jsx
+2025-10-17 00:51:49,662 - INFO - [48.7%] Adding: src\components\dashboards\IoTDashboard.jsx
+2025-10-17 00:51:49,664 - INFO - [49.3%] Adding: src\components\dashboards\NetworkTopologyDashboard.jsx
+2025-10-17 00:51:49,665 - INFO - [50.0%] Adding: src\components\dashboards\SASEDashboard.jsx
+2025-10-17 00:51:49,666 - INFO - [50.7%] Adding: src\components\dashboards\ThreatIntelligenceDashboard.jsx
+2025-10-17 00:51:49,667 - INFO - [51.3%] Adding: src\components\dashboards\ThreatProtectDashboard.jsx
+2025-10-17 00:51:49,669 - INFO - [52.0%] Adding: src\components\dashboards\TPlatformDashboard.jsx
+2025-10-17 00:51:49,670 - INFO - [52.7%] Adding: src\components\ui\accordion.jsx
+2025-10-17 00:51:49,672 - INFO - [53.3%] Adding: src\components\ui\alert-dialog.jsx
+2025-10-17 00:51:49,674 - INFO - [54.0%] Adding: src\components\ui\alert.jsx
+2025-10-17 00:51:49,675 - INFO - [54.7%] Adding: src\components\ui\aspect-ratio.jsx
+2025-10-17 00:51:49,676 - INFO - [55.3%] Adding: src\components\ui\avatar.jsx
+2025-10-17 00:51:49,677 - INFO - [56.0%] Adding: src\components\ui\badge.jsx
+2025-10-17 00:51:49,678 - INFO - [56.7%] Adding: src\components\ui\breadcrumb.jsx
+2025-10-17 00:51:49,680 - INFO - [57.3%] Adding: src\components\ui\button.jsx
+2025-10-17 00:51:49,680 - INFO - [58.0%] Adding: src\components\ui\calendar.jsx
+2025-10-17 00:51:49,681 - INFO - [58.7%] Adding: src\components\ui\card.jsx
+2025-10-17 00:51:49,682 - INFO - [59.3%] Adding: src\components\ui\carousel.jsx
+2025-10-17 00:51:49,683 - INFO - [60.0%] Adding: src\components\ui\chart.jsx
+2025-10-17 00:51:49,684 - INFO - [60.7%] Adding: src\components\ui\checkbox.jsx
+2025-10-17 00:51:49,685 - INFO - [61.3%] Adding: src\components\ui\collapsible.jsx
+2025-10-17 00:51:49,687 - INFO - [62.0%] Adding: src\components\ui\command.jsx
+2025-10-17 00:51:49,689 - INFO - [62.7%] Adding: src\components\ui\context-menu.jsx
+2025-10-17 00:51:49,691 - INFO - [63.3%] Adding: src\components\ui\dialog.jsx
+2025-10-17 00:51:49,692 - INFO - [64.0%] Adding: src\components\ui\drawer.jsx
+2025-10-17 00:51:49,693 - INFO - [64.7%] Adding: src\components\ui\dropdown-menu.jsx
+2025-10-17 00:51:49,694 - INFO - [65.3%] Adding: src\components\ui\form.jsx
+2025-10-17 00:51:49,696 - INFO - [66.0%] Adding: src\components\ui\hover-card.jsx
+2025-10-17 00:51:49,696 - INFO - [66.7%] Adding: src\components\ui\input-otp.jsx
+2025-10-17 00:51:49,697 - INFO - [67.3%] Adding: src\components\ui\input.jsx
+2025-10-17 00:51:49,698 - INFO - [68.0%] Adding: src\components\ui\label.jsx
+2025-10-17 00:51:49,699 - INFO - [68.7%] Adding: src\components\ui\menubar.jsx
+2025-10-17 00:51:49,700 - INFO - [69.3%] Adding: src\components\ui\navigation-menu.jsx
+2025-10-17 00:51:49,701 - INFO - [70.0%] Adding: src\components\ui\pagination.jsx
+2025-10-17 00:51:49,702 - INFO - [70.7%] Adding: src\components\ui\popover.jsx
+2025-10-17 00:51:49,703 - INFO - [71.3%] Adding: src\components\ui\progress.jsx
+2025-10-17 00:51:49,704 - INFO - [72.0%] Adding: src\components\ui\radio-group.jsx
+2025-10-17 00:51:49,706 - INFO - [72.7%] Adding: src\components\ui\resizable.jsx
+2025-10-17 00:51:49,707 - INFO - [73.3%] Adding: src\components\ui\scroll-area.jsx
+2025-10-17 00:51:49,708 - INFO - [74.0%] Adding: src\components\ui\select.jsx
+2025-10-17 00:51:49,709 - INFO - [74.7%] Adding: src\components\ui\separator.jsx
+2025-10-17 00:51:49,710 - INFO - [75.3%] Adding: src\components\ui\sheet.jsx
+2025-10-17 00:51:49,711 - INFO - [76.0%] Adding: src\components\ui\sidebar.jsx
+2025-10-17 00:51:49,712 - INFO - [76.7%] Adding: src\components\ui\skeleton.jsx
+2025-10-17 00:51:49,713 - INFO - [77.3%] Adding: src\components\ui\slider.jsx
+2025-10-17 00:51:49,714 - INFO - [78.0%] Adding: src\components\ui\sonner.jsx
+2025-10-17 00:51:49,716 - INFO - [78.7%] Adding: src\components\ui\switch.jsx
+2025-10-17 00:51:49,717 - INFO - [79.3%] Adding: src\components\ui\table.jsx
+2025-10-17 00:51:49,718 - INFO - [80.0%] Adding: src\components\ui\tabs.jsx
+2025-10-17 00:51:49,718 - INFO - [80.7%] Adding: src\components\ui\textarea.jsx
+2025-10-17 00:51:49,720 - INFO - [81.3%] Adding: src\components\ui\toggle-group.jsx
+2025-10-17 00:51:49,721 - INFO - [82.0%] Adding: src\components\ui\toggle.jsx
+2025-10-17 00:51:49,723 - INFO - [82.7%] Adding: src\components\ui\tooltip.jsx
+2025-10-17 00:51:49,725 - INFO - [83.3%] Adding: src\hooks\use-mobile.js
+2025-10-17 00:51:49,726 - INFO - [84.0%] Adding: src\hooks\useAlarmSystem.js
+2025-10-17 00:51:49,727 - INFO - [84.7%] Adding: src\hooks\useAuth.js
+2025-10-17 00:51:49,729 - INFO - [85.3%] Adding: src\hooks\useNetworkDataset.js
+2025-10-17 00:51:49,730 - INFO - [86.0%] Adding: src\lib\alarmMapping.js
+2025-10-17 00:51:49,731 - INFO - [86.7%] Adding: src\lib\graphLayouts.js
+2025-10-17 00:51:49,732 - INFO - [87.3%] Adding: src\lib\mockData.js
+2025-10-17 00:51:49,733 - INFO - [88.0%] Adding: src\lib\neo4jClient.js
+2025-10-17 00:51:49,734 - INFO - [88.7%] Adding: src\lib\networkAIContext.js
+2025-10-17 00:51:49,736 - INFO - [89.3%] Adding: src\lib\networkDataset.js
+2025-10-17 00:51:49,738 - INFO - [90.0%] Adding: src\lib\utils.js
+2025-10-17 00:51:49,739 - INFO - [90.7%] Adding: videos\Video 01 - Hero Background Loop - A_cinematic_abstract_202510162341_qqzrv.mp4
+2025-10-17 00:51:50,086 - INFO - [91.3%] Adding: videos\Video 02 - Threat Detection Visualization - Closeup_view_of_202510162341_g84t8.mp4
+2025-10-17 00:51:50,403 - INFO - [92.0%] Adding: videos\Video 03 - 5G Network Visualization  - Aerial_view_of_202510162341_0ixni.mp4
+2025-10-17 00:51:50,937 - INFO - [92.7%] Adding: videos\Video 04 - Graph Analytics Visualization  - 3d_visualization_of_202510162341_d5wxy.mp4
+2025-10-17 00:51:51,241 - INFO - [93.3%] Adding: videos\Video 05 - Cyber Defense Center Operations - Cinematic_view_of_202510162342_93d8d.mp4
+2025-10-17 00:51:51,429 - INFO - [94.0%] Adding: videos\Video 06 - IoT Device Security  - Splitscreen_visualization_showing_2025101623.mp4
+2025-10-17 00:51:51,567 - INFO - [94.7%] Adding: videos\Video 07 - SASE Platform Overview - Abstract_visualization_of_202510162342_y0s71.mp4
+2025-10-17 00:51:51,874 - INFO - [95.3%] Adding: videos\Video 08 - Competitive Advantage Visualization - Sidebyside_comparison_visualization_202510.mp4
+2025-10-17 00:51:51,994 - INFO - [96.0%] Adding: videos\Video 09 - Platform Integration - Abstract_visualization_of_202510162352_c3efe.mp4
+2025-10-17 00:51:52,323 - INFO - [96.7%] Adding: videos\Video 10 - SuccessROI Visualization  - Clean_professional_infographicstyle_2025101.mp4
+2025-10-17 00:51:52,601 - INFO - [97.3%] Adding: videos\Video_1_short_202510170001_8z6su.mp4
+2025-10-17 00:51:53,249 - INFO - [98.0%] Adding: videos\Video_2_short_202510170001_ck6pt.mp4
+2025-10-17 00:51:54,038 - INFO - [98.7%] Adding: videos\Video_3_short_202510170001_bp2ai.mp4
+2025-10-17 00:51:54,968 - INFO - [99.3%] Adding: videos\Video_4_short_202510170001_nzsir.mp4
+2025-10-17 00:51:55,901 - INFO - [100.0%] Adding: videos\Video_5_short_202510170001_zijy3.mp4
+2025-10-17 00:51:56,442 - INFO - Backup completed successfully: C:/Dat/@Scripts/@OLD/@T-MOBILE_2025-10-17_00-51-49_BEFOREMANISREPOLIT.zip
+2025-10-17 00:51:56,442 - INFO - Total files processed: 150
+2025-10-17 00:51:56,446 - INFO - Log file created at: logs\backup_2025-10-17_00-51-49.log

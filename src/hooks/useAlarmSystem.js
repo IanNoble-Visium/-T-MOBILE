@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   mapEventStreamAlarms,
   mapThreatEventAlarms,
@@ -24,9 +24,14 @@ export const useAlarmSystem = (dataset, eventStream = [], threatEvents = [], inc
   const [alarms, setAlarms] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const initializedRef = useRef(false)
 
-  // Initialize alarms from all sources
+  // Initialize alarms from all sources - only once on mount
   useEffect(() => {
+    // Prevent multiple initializations
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     try {
       setLoading(true)
       setError(null)
@@ -75,7 +80,7 @@ export const useAlarmSystem = (dataset, eventStream = [], threatEvents = [], inc
       setError(err.message)
       setLoading(false)
     }
-  }, [dataset, eventStream, threatEvents, incidents])
+  }, [])
 
   /**
    * Get alarms for a specific node

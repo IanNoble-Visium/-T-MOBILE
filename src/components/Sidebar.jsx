@@ -42,10 +42,10 @@ const Sidebar = ({ isOpen, onToggle }) => {
         <div className="flex items-center justify-between">
           {isOpen && (
             <div className="flex-1 animate-fade-in">
-              <h1 className="text-lg font-bold gradient-tmobile bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold text-white">
                 T-Mobile
               </h1>
-              <p className="text-xs text-muted-foreground">TruContext Intelligence</p>
+              <p className="text-xs text-sidebar-foreground">TruContext Intelligence</p>
             </div>
           )}
           <button
@@ -95,9 +95,9 @@ const Sidebar = ({ isOpen, onToggle }) => {
       {/* Footer */}
       <div className="p-4 border-t border-sidebar-border">
         {isOpen ? (
-          <div className="text-xs text-muted-foreground animate-fade-in">
-            <p className="font-semibold">Powered by</p>
-            <p className="gradient-trucontext bg-clip-text text-transparent font-bold">
+          <div className="text-xs animate-fade-in">
+            <p className="font-semibold text-sidebar-foreground">Powered by</p>
+            <p className="text-white font-bold">
               Visium TruContext™
             </p>
           </div>
