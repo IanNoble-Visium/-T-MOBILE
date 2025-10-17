@@ -322,7 +322,7 @@ const AIAgentDashboard = () => {
                   />
                   {activeFilterCount > 0 && (
                     <div className="mt-1">
-                      <Badge className="bg-[#E20074] text-white">
+                      <Badge className="bg-[#0066CC] text-white">
                         {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
                       </Badge>
                     </div>

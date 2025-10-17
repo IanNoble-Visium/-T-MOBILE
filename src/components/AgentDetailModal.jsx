@@ -8,6 +8,7 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select';
+import { Separator } from './ui/separator';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -98,6 +99,11 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
   const [editOpen, setEditOpen] = useState(false);
   const [editPrompt, setEditPrompt] = useState(agent?.promptTemplate || '');
   const [editPriority, setEditPriority] = useState(agent?.priority || 'medium');
+  const [editName, setEditName] = useState(agent?.name || '');
+  const [editNickname, setEditNickname] = useState(agent?.nickname || '');
+  const [editType, setEditType] = useState(agent?.type || 'threat-hunter');
+  const [editModel, setEditModel] = useState(agent?.modelName || agent?.model || '');
+
   const [editMaxTokens, setEditMaxTokens] = useState(Number(agent?.maxTokens) || 8000);
 
 
@@ -409,6 +415,10 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
           <AlertDialog open={editOpen} onOpenChange={(open) => {
             setEditOpen(open);
             if (open) {
+              setEditName(agent?.name || '');
+              setEditNickname(agent?.nickname || '');
+              setEditType(agent?.type || 'threat-hunter');
+              setEditModel(agent?.modelName || agent?.model || '');
               setEditPrompt(agent?.promptTemplate || '');
               setEditPriority(agent?.priority || 'medium');
               setEditMaxTokens(Number(agent?.maxTokens) || 8000);
@@ -427,39 +437,114 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
-              <div className="space-y-3 py-2">
-                <div className="space-y-1">
-                  <Label htmlFor="prompt" className="text-gray-300">Prompt Template</Label>
-                  <Textarea id="prompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} className="min-h-24" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label htmlFor="priority" className="text-gray-300">Priority</Label>
-                    <Select value={editPriority} onValueChange={setEditPriority}>
-                      <SelectTrigger id="priority" className="w-full">
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
+              <div className="space-y-4 py-2">
+                {/* Agent Identity */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-white">Agent Identity</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="agentName" className="text-gray-300">Agent Name</Label>
+                      <Input id="agentName" value={editName} onChange={(e) => setEditName(e.target.value)} aria-label="Agent name" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="agentNickname" className="text-gray-300">Nickname</Label>
+                      <Input id="agentNickname" value={editNickname} onChange={(e) => setEditNickname(e.target.value)} aria-label="Agent nickname" />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="agentType" className="text-gray-300">Type</Label>
+                      <Select value={editType} onValueChange={setEditType}>
+                        <SelectTrigger id="agentType" className="w-full">
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="threat-hunter">Threat Hunter</SelectItem>
+                          <SelectItem value="vulnerability-scanner">Vulnerability Scanner</SelectItem>
+                          <SelectItem value="anomaly-detector">Anomaly Detector</SelectItem>
+                          <SelectItem value="incident-responder">Incident Responder</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="agentModel" className="text-gray-300">Model</Label>
+                      <Input id="agentModel" value={editModel} onChange={(e) => setEditModel(e.target.value)} placeholder="e.g., GPT-4 Turbo" aria-label="Model name" />
+                    </div>
                   </div>
+                </div>
+
+                <Separator className="bg-gray-800" />
+
+                {/* Configuration */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-white">Configuration</p>
                   <div className="space-y-1">
-                    <Label htmlFor="maxTokens" className="text-gray-300">Max Tokens</Label>
-                    <Input id="maxTokens" type="number" min={256} step={1} value={editMaxTokens} onChange={(e) => setEditMaxTokens(e.target.value)} />
+                    <Label htmlFor="prompt" className="text-gray-300">Prompt Template</Label>
+                    <Textarea id="prompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} className="min-h-24" aria-label="Prompt template" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="priority" className="text-gray-300">Priority</Label>
+                      <Select value={editPriority} onValueChange={setEditPriority}>
+                        <SelectTrigger id="priority" className="w-full">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="maxTokens" className="text-gray-300">Max Tokens</Label>
+                      <Input id="maxTokens" type="number" min={256} step={1} value={editMaxTokens} onChange={(e) => setEditMaxTokens(e.target.value)} aria-label="Max tokens" />
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="bg-gray-800" />
+
+                {/* Performance */}
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-white">Performance</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm text-gray-300">
+                    <div>Findings: {agent.findings ?? 0}</div>
+                    <div>Alerts Raised: {agent.alertsRaised ?? 0}</div>
+                    <div>Token Usage: {agent.tokenUsage ?? 0}</div>
                   </div>
                 </div>
               </div>
 
-              <AlertDialogFooter>
+              <AlertDialogFooter className="gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="bg-[#E4002B] hover:bg-[#E4002B]/90 text-white"
+                  aria-label="Reset performance counters"
+                  onClick={() => {
+                    const updated = {
+                      ...agent,
+                      findings: 0,
+                      alertsRaised: 0,
+                      tokenUsage: 0,
+                    };
+                    onUpdate?.(updated);
+                    toast.success('Counters reset successfully');
+                  }}
+                >
+                  Reset Counters
+                </Button>
+
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-[#E20074] hover:bg-[#E20074]/90"
                   onClick={() => {
                     const updated = {
                       ...agent,
+                      name: editName,
+                      nickname: editNickname,
+                      type: editType,
+                      modelName: editModel,
+                      model: editModel,
                       promptTemplate: editPrompt,
                       priority: editPriority,
                       maxTokens: Number(editMaxTokens)
