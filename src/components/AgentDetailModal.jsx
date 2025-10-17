@@ -9,6 +9,8 @@ import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select';
 import { Separator } from './ui/separator';
+import { Checkbox } from './ui/checkbox';
+
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -103,6 +105,8 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
   const [editNickname, setEditNickname] = useState(agent?.nickname || '');
   const [editType, setEditType] = useState(agent?.type || 'threat-hunter');
   const [editModel, setEditModel] = useState(agent?.modelName || agent?.model || '');
+  const [resetCounters, setResetCounters] = useState(false);
+
 
   const [editMaxTokens, setEditMaxTokens] = useState(Number(agent?.maxTokens) || 8000);
 
@@ -422,6 +426,7 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
               setEditPrompt(agent?.promptTemplate || '');
               setEditPriority(agent?.priority || 'medium');
               setEditMaxTokens(Number(agent?.maxTokens) || 8000);
+              setResetCounters(false);
             }
           }}>
             <AlertDialogTrigger asChild>
@@ -511,29 +516,16 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
                     <div>Alerts Raised: {agent.alertsRaised ?? 0}</div>
                     <div>Token Usage: {agent.tokenUsage ?? 0}</div>
                   </div>
+                  <div className="pt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="resetCounters" checked={resetCounters} onCheckedChange={setResetCounters} aria-label="Reset performance counters to zero" />
+                      <Label htmlFor="resetCounters" className="text-gray-300">Reset performance counters to zero</Label>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <AlertDialogFooter className="gap-2">
-                <Button
-                  type="button"
-                  variant="destructive"
-                  className="bg-[#E4002B] hover:bg-[#E4002B]/90 text-white"
-                  aria-label="Reset performance counters"
-                  onClick={() => {
-                    const updated = {
-                      ...agent,
-                      findings: 0,
-                      alertsRaised: 0,
-                      tokenUsage: 0,
-                    };
-                    onUpdate?.(updated);
-                    toast.success('Counters reset successfully');
-                  }}
-                >
-                  Reset Counters
-                </Button>
-
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-[#E20074] hover:bg-[#E20074]/90"
@@ -547,10 +539,11 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
                       model: editModel,
                       promptTemplate: editPrompt,
                       priority: editPriority,
-                      maxTokens: Number(editMaxTokens)
+                      maxTokens: Number(editMaxTokens),
+                      ...(resetCounters ? { findings: 0, alertsRaised: 0, tokenUsage: 0 } : {}),
                     };
                     onUpdate?.(updated);
-                    toast.success('Configuration updated');
+                    toast.success(resetCounters ? 'Configuration updated and counters reset' : 'Configuration updated');
                     setEditOpen(false);
                   }}
                 >
