@@ -25,4 +25,9 @@ export default defineConfig({
   server: {
     middlewareMode: false,
   },
+  build: {
+    assetsInlineLimit: 0,
+    copyPublicDir: true,
+  },
+  publicDir: 'public',
 })
