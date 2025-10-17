@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import AgentWizard from '../AgentWizard';
 import AgentMarketplace from '../AgentMarketplace';
 import AgentDetailModal from '../AgentDetailModal';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from '../ui/select';
 import KPICard from '../KPICard';
 import AgentCard from '../AgentCard';
 import ActivityFeed from '../ActivityFeed';
@@ -30,6 +32,86 @@ const AIAgentDashboard = () => {
   const [kpis, setKPIs] = useState({});
   const [selectedAgent, setSelectedAgent] = useState(null);
   const [showWizard, setShowWizard] = useState(false);
+  // Search and Filters
+  const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [modelFilter, setModelFilter] = useState('all');
+  const [perfFilter, setPerfFilter] = useState('all');
+  const searchInputRef = useRef(null);
+
+  const getPerfLevel = (a) => {
+    if (a.efficiency > 80 && a.falsePositiveRate < 5) return 'high';
+    if (a.efficiency < 60 || a.falsePositiveRate > 10) return 'needs-attention';
+    return 'average';
+  };
+
+  const filteredAgents = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return agents.filter((a) => {
+      // Text match (id, name, nickname, role, type, modelName)
+      const matchesQuery = q === '' || [a.id, a.name, a.nickname, a.role, a.type, a.modelName]
+        .some((v) => String(v).toLowerCase().includes(q));
+
+      // Status
+      const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+
+      // Type
+      const matchesType = typeFilter === 'all' || a.type === typeFilter;
+
+      // Model
+      const matchesModel = modelFilter === 'all' || a.modelName === modelFilter;
+
+      // Performance
+      const matchesPerf = perfFilter === 'all' || getPerfLevel(a) === perfFilter;
+
+      return matchesQuery && matchesStatus && matchesType && matchesModel && matchesPerf;
+    });
+  }, [agents, query, statusFilter, typeFilter, modelFilter, perfFilter]);
+  const types = useMemo(() => Array.from(new Set(agents.map(a => a.type))).sort(), [agents]);
+  const models = useMemo(() => Array.from(new Set(agents.map(a => a.modelName))).sort(), [agents]);
+
+  // Count active filters (query + non-"all" selections)
+  const activeFilterCount = useMemo(() => {
+    let n = 0;
+    if (query.trim() !== '') n++;
+    if (statusFilter !== 'all') n++;
+    if (typeFilter !== 'all') n++;
+    if (modelFilter !== 'all') n++;
+    if (perfFilter !== 'all') n++;
+    return n;
+  }, [query, statusFilter, typeFilter, modelFilter, perfFilter]);
+
+  // Focus search on Ctrl/Cmd+K
+  useEffect(() => {
+    const handler = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
+
+  const clearFilters = () => {
+    setQuery('');
+    setStatusFilter('all');
+    setTypeFilter('all');
+    setModelFilter('all');
+    setPerfFilter('all');
+  };
+
+  // Apply agent updates from modal actions
+  const handleAgentUpdate = (updatedAgent) => {
+    setAgents((prev) => {
+      const next = prev.map((a) => (a.id === updatedAgent.id ? updatedAgent : a));
+      setKPIs(generateAgentKPIs(next));
+      return next;
+    });
+    setSelectedAgent(updatedAgent);
+  };
+
   const [showMarketplace, setShowMarketplace] = useState(false);
 
   const handleWizardComplete = (newAgentData) => {
@@ -105,7 +187,7 @@ const AIAgentDashboard = () => {
     const interval = setInterval(() => {
       const newActivity = generateActivity();
       setActivities(prev => [newActivity, ...prev.slice(0, 99)]);
-      
+
       // Update agent metrics randomly
       setAgents(prev => prev.map(agent => {
         if (Math.random() > 0.8) {
@@ -118,7 +200,7 @@ const AIAgentDashboard = () => {
         }
         return agent;
       }));
-      
+
       // Update KPIs
       setKPIs(prev => ({
         ...prev,
@@ -228,9 +310,94 @@ const AIAgentDashboard = () => {
                 </div>
               </div>
 
+              {/* Search + Filters */}
+              <div className="mb-4 grid grid-cols-1 xl:grid-cols-5 gap-3">
+                <div className="xl:col-span-2">
+                  <Input
+                    ref={searchInputRef}
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Search agents (Ctrl/Cmd+K)"
+                    aria-label="Search agents"
+                  />
+                  {activeFilterCount > 0 && (
+                    <div className="mt-1">
+                      <Badge className="bg-[#E20074] text-white">
+                        {activeFilterCount} {activeFilterCount === 1 ? 'filter' : 'filters'} active
+                      </Badge>
+                    </div>
+                  )}
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger aria-label="Filter by status" className="w-full">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="idle">Idle</SelectItem>
+                    <SelectItem value="investigating">Investigating</SelectItem>
+                    <SelectItem value="responding">Responding</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger aria-label="Filter by type" className="w-full">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {types.map((t) => (
+                      <SelectItem key={t} value={t}>{t.replace('-', ' ')}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={modelFilter} onValueChange={setModelFilter}>
+                  <SelectTrigger aria-label="Filter by model" className="w-full">
+                    <SelectValue placeholder="Model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Models</SelectItem>
+                    {models.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={perfFilter} onValueChange={setPerfFilter}>
+                  <SelectTrigger aria-label="Filter by performance" className="w-full">
+                    <SelectValue placeholder="Performance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Performance</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="average">Average</SelectItem>
+                    <SelectItem value="needs-attention">Needs Attention</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Active filters + result count */}
+              <div className="flex items-center justify-between mb-3 text-xs">
+                <div className="flex flex-wrap gap-2">
+                  {query && <Badge variant="outline">Query: {query}</Badge>}
+                  {statusFilter !== 'all' && <Badge variant="outline">Status: {statusFilter}</Badge>}
+                  {typeFilter !== 'all' && <Badge variant="outline">Type: {typeFilter}</Badge>}
+                  {modelFilter !== 'all' && <Badge variant="outline">Model: {modelFilter}</Badge>}
+                  {perfFilter !== 'all' && <Badge variant="outline">Perf: {perfFilter}</Badge>}
+                  {(query || statusFilter !== 'all' || typeFilter !== 'all' || modelFilter !== 'all' || perfFilter !== 'all') && (
+                    <Button size="sm" variant="ghost" onClick={clearFilters} className="text-gray-300 hover:text-white">
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <div className="text-gray-400">
+                  Showing <span className="text-white font-semibold">{filteredAgents.length}</span> of {agents.length}
+                </div>
+              </div>
+
+
               {/* Agent Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-2">
-                {agents.map(agent => (
+                {filteredAgents.map(agent => (
                   <AgentCard
                     key={agent.id}
                     agent={agent}
@@ -248,7 +415,7 @@ const AIAgentDashboard = () => {
                 <TrendingUp className="w-5 h-5 text-[#E20074]" />
                 Performance Metrics
               </h2>
-              
+
               <div className="space-y-4">
                 {/* Detection Speed */}
                 <div>
@@ -305,6 +472,10 @@ const AIAgentDashboard = () => {
           {/* Agent Collaboration */}
           <Card className="border-gray-800 bg-gray-900/50 backdrop-blur-sm mt-6">
             <CardContent className="p-6">
+
+
+
+
               <h2 className="text-lg font-semibold text-white mb-4">Agent Collaboration</h2>
               <div className="space-y-3">
                 <Button size="sm" variant="outline" className="w-full justify-start text-xs">
@@ -357,7 +528,7 @@ const AIAgentDashboard = () => {
         onClose={() => setShowWizard(false)}
         onComplete={handleWizardComplete}
       />
-      
+
       <AgentMarketplace
         isOpen={showMarketplace}
         onClose={() => setShowMarketplace(false)}
@@ -383,6 +554,7 @@ const AIAgentDashboard = () => {
         agent={selectedAgent}
         isOpen={!!selectedAgent}
         onClose={handleCloseAgentDetail}
+        onUpdate={handleAgentUpdate}
       />
     </div>
   );

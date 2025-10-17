@@ -1,26 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './ui/dialog';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Progress } from './ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { 
-  Bot, 
-  Activity, 
-  AlertTriangle, 
-  Shield, 
-  Eye, 
+import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from './ui/select';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from './ui/alert-dialog';
+import { toast } from 'sonner';
+import {
+  Bot,
+  Activity,
+  AlertTriangle,
+  Shield,
+  Eye,
   Zap,
   Clock,
   TrendingUp,
   Target,
   Settings,
   BarChart3,
+
   FileText,
   X
 } from 'lucide-react';
 
-const AgentDetailModal = ({ agent, isOpen, onClose }) => {
+const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
   if (!agent) return null;
 
   const getStatusColor = (status) => {
@@ -77,6 +94,12 @@ const AgentDetailModal = ({ agent, isOpen, onClose }) => {
   };
 
   const performance = getPerformanceIndicator();
+  // Local state for Edit Configuration dialog
+  const [editOpen, setEditOpen] = useState(false);
+  const [editPrompt, setEditPrompt] = useState(agent?.promptTemplate || '');
+  const [editPriority, setEditPriority] = useState(agent?.priority || 'medium');
+  const [editMaxTokens, setEditMaxTokens] = useState(Number(agent?.maxTokens) || 8000);
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -93,11 +116,15 @@ const AgentDetailModal = ({ agent, isOpen, onClose }) => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant={getStatusBadgeVariant(agent.status)}>
-                {agent.status.toUpperCase()}
-              </Badge>
-              <div className={`flex items-center gap-1 text-sm ${performance.color}`}>
-                <span>{performance.icon}</span>
+              {agent.deactivated ? (
+                <Badge variant="outline" className="border-gray-500 text-gray-300">DEACTIVATED</Badge>
+              ) : (
+                <Badge variant={getStatusBadgeVariant(agent.status)}>
+                  {agent.status.toUpperCase()}
+                </Badge>
+              )}
+              <div className={`flex items-center gap-1 text-sm ${performance.color}`} aria-live="polite">
+                <span aria-hidden>{performance.icon}</span>
                 <span>{performance.label}</span>
               </div>
             </div>
@@ -195,7 +222,7 @@ const AgentDetailModal = ({ agent, isOpen, onClose }) => {
                 <BarChart3 className="w-5 h-5" />
                 Performance Metrics
               </h3>
-              
+
               {/* Efficiency */}
               <div className="mb-4">
                 <div className="flex items-center justify-between mb-2">
@@ -333,15 +360,155 @@ const AgentDetailModal = ({ agent, isOpen, onClose }) => {
 
         {/* Action Buttons */}
         <div className="flex gap-3 pt-4 border-t border-gray-800">
-          <Button variant="outline" className="flex-1">
-            Pause Agent
-          </Button>
-          <Button variant="outline" className="flex-1">
-            Edit Configuration
-          </Button>
-          <Button variant="destructive" className="flex-1">
-            Deactivate Agent
-          </Button>
+          {/* Pause / Resume with confirmation */}
+          {agent.deactivated ? (
+            <Button variant="outline" className="flex-1" disabled aria-disabled>
+              Deactivated
+            </Button>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="flex-1" aria-label={agent.status === 'idle' ? 'Resume Agent' : 'Pause Agent'}>
+                  {agent.status === 'idle' ? 'Resume Agent' : 'Pause Agent'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="bg-gray-900 border-gray-800">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-white">
+                    {agent.status === 'idle' ? 'Resume this agent?' : 'Pause this agent?'}
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {agent.status === 'idle'
+                      ? 'The agent will resume active monitoring and investigations.'
+                      : 'The agent will switch to idle state and stop active tasks.'}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-[#E20074] hover:bg-[#E20074]/90"
+                    onClick={() => {
+                      const updated = {
+                        ...agent,
+                        status: agent.status === 'idle' ? 'active' : 'idle',
+                        deactivated: false,
+                        lastActive: new Date(),
+                      };
+                      onUpdate?.(updated);
+                      toast.success(agent.status === 'idle' ? 'Agent resumed' : 'Agent paused');
+                    }}
+                  >
+                    Confirm
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+
+          {/* Edit Configuration */}
+          <AlertDialog open={editOpen} onOpenChange={(open) => {
+            setEditOpen(open);
+            if (open) {
+              setEditPrompt(agent?.promptTemplate || '');
+              setEditPriority(agent?.priority || 'medium');
+              setEditMaxTokens(Number(agent?.maxTokens) || 8000);
+            }
+          }}>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="flex-1" aria-label="Edit Configuration" disabled={agent.deactivated}>
+                Edit Configuration
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-gray-900 border-gray-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Edit Configuration</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Update key configuration fields for this agent. Changes take effect immediately.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+
+              <div className="space-y-3 py-2">
+                <div className="space-y-1">
+                  <Label htmlFor="prompt" className="text-gray-300">Prompt Template</Label>
+                  <Textarea id="prompt" value={editPrompt} onChange={(e) => setEditPrompt(e.target.value)} className="min-h-24" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="priority" className="text-gray-300">Priority</Label>
+                    <Select value={editPriority} onValueChange={setEditPriority}>
+                      <SelectTrigger id="priority" className="w-full">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="maxTokens" className="text-gray-300">Max Tokens</Label>
+                    <Input id="maxTokens" type="number" min={256} step={1} value={editMaxTokens} onChange={(e) => setEditMaxTokens(e.target.value)} />
+                  </div>
+                </div>
+              </div>
+
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-[#E20074] hover:bg-[#E20074]/90"
+                  onClick={() => {
+                    const updated = {
+                      ...agent,
+                      promptTemplate: editPrompt,
+                      priority: editPriority,
+                      maxTokens: Number(editMaxTokens)
+                    };
+                    onUpdate?.(updated);
+                    toast.success('Configuration updated');
+                    setEditOpen(false);
+                  }}
+                >
+                  Save Changes
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Deactivate */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="flex-1" aria-label="Deactivate Agent" disabled={agent.deactivated}>
+                Deactivate Agent
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-gray-900 border-gray-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-white">Deactivate this agent?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  The agent will be set to an inactive state and removed from active monitoring until resumed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-[#E20074] hover:bg-[#E20074]/90"
+                  onClick={() => {
+                    const updated = {
+                      ...agent,
+                      status: 'idle',
+                      deactivated: true,
+                      lastActive: new Date(),
+                    };
+                    onUpdate?.(updated);
+                    toast.success('Agent deactivated');
+                  }}
+                >
+                  Confirm
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </DialogContent>
     </Dialog>

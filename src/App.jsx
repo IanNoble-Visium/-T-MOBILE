@@ -1,6 +1,8 @@
 import { useState, useCallback } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import './App.css'
+import { Toaster } from './components/ui/sonner'
+
 
 // Layout components
 import Sidebar from './components/Sidebar'
@@ -83,6 +85,8 @@ function AppContent({ onLogout }) {
           onResolveAllAlarms={resolveAllAlarms}
           onLogout={handleLogout}
         />
+
+        <Toaster richColors position="bottom-right" />
 
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
