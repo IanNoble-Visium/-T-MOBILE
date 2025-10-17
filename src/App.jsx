@@ -27,6 +27,7 @@ import NetworkTopologyDashboard from './components/dashboards/NetworkTopologyDas
 import GeographicMapDashboard from './components/dashboards/GeographicMapDashboard'
 import ThreatIntelligenceDashboard from './components/dashboards/ThreatIntelligenceDashboard'
 import AIAnalyticsDashboard from './components/dashboards/AIAnalyticsDashboard'
+import AIAgentDashboard from './components/dashboards/AIAgentDashboard'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated, isLoading }) => {
@@ -94,6 +95,7 @@ function AppContent() {
             <Route path="/geographic-map" element={<GeographicMapDashboard />} />
             <Route path="/threat-intelligence" element={<ThreatIntelligenceDashboard />} />
             <Route path="/ai-analytics" element={<AIAnalyticsDashboard />} />
+            <Route path="/ai-agents" element={<AIAgentDashboard />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>

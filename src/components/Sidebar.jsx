@@ -10,6 +10,7 @@ import {
   MapPin,
   Target,
   Brain,
+  Bot,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -28,7 +29,8 @@ const Sidebar = ({ isOpen, onToggle }) => {
     { path: '/graph-analytics', icon: GitBranch, label: 'Graph Analytics' },
     { path: '/network-topology', icon: Network, label: 'Network Topology' },
     { path: '/geographic-map', icon: MapPin, label: 'Geographic Map' },
-    { path: '/threat-intelligence', icon: Target, label: 'Threat Intelligence' }
+    { path: '/threat-intelligence', icon: Target, label: 'Threat Intelligence' },
+    { path: '/ai-agents', icon: Bot, label: 'AI Agents' }
   ]
   
   return (
