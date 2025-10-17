@@ -53,10 +53,12 @@ const Header = ({
   }
 
   const handleLogout = () => {
-    // Clear localStorage
+    // Clear all auth-related storage
     localStorage.removeItem('authToken')
+    localStorage.removeItem('authData')
     localStorage.removeItem('userPreferences')
     localStorage.removeItem('appSettings')
+    sessionStorage.removeItem('authData')
 
     if (onLogout) {
       onLogout()

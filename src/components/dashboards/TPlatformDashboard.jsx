@@ -27,27 +27,27 @@ const TPlatformDashboard = () => {
           subtitle={`${metrics.bandwidth_utilization}% utilization`}
           trend="up"
           trendValue="+5%"
-          icon={Server}
+          icon={<Server className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Active Connections"
           value={metrics.active_connections.toLocaleString()}
           subtitle="Real-time sessions"
           trend="up"
           trendValue="+8%"
-          icon={Network}
+          icon={<Network className="w-6 h-6" />}
           variant="secondary"
         />
-        
+
         <KPICard
           title="5G Coverage"
           value={`${metrics.five_g_coverage}%`}
           subtitle="Network availability"
           trend="up"
           trendValue="+2%"
-          icon={TrendingUp}
+          icon={<TrendingUp className="w-6 h-6" />}
           variant="success"
         />
       </div>

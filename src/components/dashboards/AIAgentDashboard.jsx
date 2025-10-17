@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import AgentWizard from '../AgentWizard';
 import AgentMarketplace from '../AgentMarketplace';
+import AgentDetailModal from '../AgentDetailModal';
 import { Card, CardContent } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import KPICard from '../KPICard';
 import AgentCard from '../AgentCard';
 import ActivityFeed from '../ActivityFeed';
-import { 
-  Bot, 
-  Plus, 
-  Store, 
-  TrendingUp, 
-  Clock, 
+import {
+  Bot,
+  Plus,
+  Store,
+  TrendingUp,
+  Clock,
   Zap,
   Users
 } from 'lucide-react';
@@ -130,7 +131,10 @@ const AIAgentDashboard = () => {
 
   const handleAgentClick = (agent) => {
     setSelectedAgent(agent);
-    // TODO: Open agent detail modal
+  };
+
+  const handleCloseAgentDetail = () => {
+    setSelectedAgent(null);
   };
 
   return (
@@ -373,6 +377,13 @@ const AIAgentDashboard = () => {
           }
         }
       `}</style>
+
+      {/* Agent Detail Modal */}
+      <AgentDetailModal
+        agent={selectedAgent}
+        isOpen={!!selectedAgent}
+        onClose={handleCloseAgentDetail}
+      />
     </div>
   );
 };

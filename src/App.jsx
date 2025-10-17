@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children, isAuthenticated, isLoading }) => {
 }
 
 // Inner component that uses Router hooks
-function AppContent() {
+function AppContent({ onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const navigate = useNavigate()
   const { dataset } = useNetworkDataset()
@@ -64,8 +64,11 @@ function AppContent() {
   }, [navigate])
 
   const handleLogout = useCallback(() => {
+    if (onLogout) {
+      onLogout()
+    }
     navigate('/login')
-  }, [navigate])
+  }, [navigate, onLogout])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -105,13 +108,13 @@ function AppContent() {
 }
 
 function App() {
-  const { authData, isAuthenticated, isLoading, login } = useAuth()
+  const { isAuthenticated, isLoading, login, logout } = useAuth()
 
   return (
     <Router>
       {isAuthenticated && !isLoading ? (
         <SearchProvider>
-          <AppContent />
+          <AppContent onLogout={logout} />
         </SearchProvider>
       ) : (
         <Routes>

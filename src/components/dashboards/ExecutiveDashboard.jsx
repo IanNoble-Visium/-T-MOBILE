@@ -109,37 +109,37 @@ const ExecutiveDashboard = () => {
           subtitle={`${kpiMetrics.threats_blocked_24h.toLocaleString()} blocked`}
           trend="up"
           trendValue="+12%"
-          icon={Shield}
+          icon={<Shield className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Active Incidents"
           value={kpiMetrics.active_incidents}
           subtitle="Across all platforms"
           trend="down"
           trendValue="-8%"
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="w-6 h-6" />}
           variant="warning"
         />
-        
+
         <KPICard
           title="Network Health Score"
           value={`${kpiMetrics.network_health_score}%`}
           subtitle="5G Advanced Network"
           trend="up"
           trendValue="+2%"
-          icon={Activity}
+          icon={<Activity className="w-6 h-6" />}
           variant="success"
         />
-        
+
         <KPICard
           title="Cost Savings (Annual)"
           value={`$${(kpiMetrics.cost_savings / 1000000).toFixed(1)}M`}
           subtitle="vs. Traditional SIEM"
           trend="up"
           trendValue="+25%"
-          icon={DollarSign}
+          icon={<DollarSign className="w-6 h-6" />}
           variant="secondary"
         />
       </div>

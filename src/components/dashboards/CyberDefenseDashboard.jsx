@@ -65,37 +65,37 @@ const CyberDefenseDashboard = () => {
           subtitle={`${criticalIncidents.length} critical`}
           trend="down"
           trendValue="-15%"
-          icon={ShieldAlert}
+          icon={<ShieldAlert className="w-6 h-6" />}
           variant="danger"
         />
-        
+
         <KPICard
           title="Threat Hunting Ops"
           value="12"
           subtitle="In progress"
           trend="up"
           trendValue="+3"
-          icon={Target}
+          icon={<Target className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Digital Forensics"
           value="8"
           subtitle="Active investigations"
           trend="up"
           trendValue="+2"
-          icon={FileSearch}
+          icon={<FileSearch className="w-6 h-6" />}
           variant="secondary"
         />
-        
+
         <KPICard
           title="Mean Time to Contain"
           value="12 min"
           subtitle="Average response"
           trend="down"
           trendValue="-25%"
-          icon={Clock}
+          icon={<Clock className="w-6 h-6" />}
           variant="success"
         />
       </div>

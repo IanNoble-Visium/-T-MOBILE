@@ -43,6 +43,9 @@ export const useAuth = () => {
     setAuthData(null)
     setIsAuthenticated(false)
     localStorage.removeItem('authData')
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('userPreferences')
+    localStorage.removeItem('appSettings')
     sessionStorage.removeItem('authData')
   }
 

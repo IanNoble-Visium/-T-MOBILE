@@ -1,12 +1,12 @@
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 
-const KPICard = ({ 
-  title, 
-  value, 
-  subtitle, 
-  trend, 
-  trendValue, 
-  icon: Icon,
+const KPICard = ({
+  title,
+  value,
+  subtitle,
+  trend,
+  trendValue,
+  icon,
   variant = 'default'
 }) => {
   const getTrendIcon = () => {
@@ -14,13 +14,13 @@ const KPICard = ({
     if (trend === 'down') return <TrendingDown className="w-4 h-4" />
     return <Minus className="w-4 h-4" />
   }
-  
+
   const getTrendColor = () => {
     if (trend === 'up') return 'text-green-500'
     if (trend === 'down') return 'text-red-500'
     return 'text-gray-500'
   }
-  
+
   const getVariantClass = () => {
     switch (variant) {
       case 'primary':
@@ -37,7 +37,7 @@ const KPICard = ({
         return 'bg-card'
     }
   }
-  
+
   return (
     <div className={`rounded-lg border border-border p-6 transition-all hover:shadow-lg hover:scale-105 ${getVariantClass()}`}>
       <div className="flex items-start justify-between">
@@ -48,14 +48,14 @@ const KPICard = ({
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           )}
         </div>
-        
-        {Icon && (
+
+        {icon && (
           <div className={`p-3 rounded-lg ${variant === 'default' ? 'bg-primary/10' : 'bg-white/10'}`}>
-            <Icon className="w-6 h-6" />
+            {icon}
           </div>
         )}
       </div>
-      
+
       {trendValue && (
         <div className={`flex items-center gap-1 mt-4 text-sm ${getTrendColor()}`}>
           {getTrendIcon()}

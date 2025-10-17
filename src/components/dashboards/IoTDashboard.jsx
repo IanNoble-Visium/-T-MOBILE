@@ -40,37 +40,37 @@ const IoTDashboard = () => {
           subtitle="Across all networks"
           trend="up"
           trendValue="+12%"
-          icon={Cpu}
+          icon={<Cpu className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Healthy Devices"
           value={metrics.device_health_good.toLocaleString()}
           subtitle={`${((metrics.device_health_good / metrics.total_devices) * 100).toFixed(1)}% of total`}
           trend="up"
           trendValue="+3%"
-          icon={Activity}
+          icon={<Activity className="w-6 h-6" />}
           variant="success"
         />
-        
+
         <KPICard
           title="Anomalies Detected"
           value={metrics.anomalies_detected}
           subtitle="Last 24 hours"
           trend="down"
           trendValue="-15%"
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="w-6 h-6" />}
           variant="warning"
         />
-        
+
         <KPICard
           title="Security Alerts"
           value={metrics.security_alerts}
           subtitle="Active alerts"
           trend="down"
           trendValue="-20%"
-          icon={AlertTriangle}
+          icon={<AlertTriangle className="w-6 h-6" />}
           variant="danger"
         />
       </div>

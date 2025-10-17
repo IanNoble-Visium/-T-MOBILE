@@ -178,37 +178,37 @@ const ThreatProtectDashboard = () => {
           subtitle="Total devices monitored"
           trend="up"
           trendValue="+8%"
-          icon={Shield}
+          icon={<Shield className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Threats Blocked (24h)"
           value={threatsBlocked24h.toLocaleString()}
           subtitle={`${blockRate}% block rate`}
           trend="up"
           trendValue="+12%"
-          icon={ShieldCheck}
+          icon={<ShieldCheck className="w-6 h-6" />}
           variant="success"
         />
-        
+
         <KPICard
           title="VPN Connections"
           value={vpnConnections.toLocaleString()}
           subtitle="Secure encrypted traffic"
           trend="up"
           trendValue="+5%"
-          icon={Lock}
+          icon={<Lock className="w-6 h-6" />}
           variant="secondary"
         />
-        
+
         <KPICard
           title="Malicious Sites Blocked"
           value={maliciousSitesBlocked.toLocaleString()}
           subtitle="URL filtering events"
           trend="up"
           trendValue="+15%"
-          icon={Globe}
+          icon={<Globe className="w-6 h-6" />}
           variant="warning"
         />
       </div>

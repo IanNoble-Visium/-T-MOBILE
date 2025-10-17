@@ -64,37 +64,37 @@ const SASEDashboard = () => {
           subtitle="Total SASE coverage"
           trend="up"
           trendValue="+5%"
-          icon={Shield}
+          icon={<Shield className="w-6 h-6" />}
           variant="primary"
         />
-        
+
         <KPICard
           title="Threats Blocked (24h)"
           value={metrics.threats_blocked_24h.toLocaleString()}
           subtitle="Real-time protection"
           trend="up"
           trendValue="+12%"
-          icon={AlertCircle}
+          icon={<AlertCircle className="w-6 h-6" />}
           variant="danger"
         />
-        
+
         <KPICard
           title="ZTNA Enforcements"
           value={metrics.ztna_enforcements.toLocaleString()}
           subtitle="Zero Trust policies"
           trend="up"
           trendValue="+8%"
-          icon={Lock}
+          icon={<Lock className="w-6 h-6" />}
           variant="secondary"
         />
-        
+
         <KPICard
           title="Precision AI Detections"
           value={metrics.precision_ai_detections}
           subtitle="Never-before-seen threats"
           trend="up"
           trendValue="+15%"
-          icon={Zap}
+          icon={<Zap className="w-6 h-6" />}
           variant="warning"
         />
       </div>
