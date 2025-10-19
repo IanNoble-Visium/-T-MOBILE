@@ -50,11 +50,12 @@ function saveCacheToStorage() {
 /**
  * Get or generate image for a network node
  * @param {Object} node - Network node object
+ * @param {boolean} autoGenerate - Whether to automatically generate missing images
  * @returns {Promise<string|null>} - Image URL or null
  */
-export async function getNodeImage(node) {
+export async function getNodeImage(node, autoGenerate = false) {
   const { id, name, type } = node;
-  
+
   // Check memory cache first
   if (imageCache.has(id)) {
     return imageCache.get(id);
@@ -63,7 +64,7 @@ export async function getNodeImage(node) {
   // Check if Cloudinary is configured
   if (isCloudinaryConfigured()) {
     const publicId = generateNodePublicId(id, name);
-    
+
     // Check if image exists in Cloudinary
     const exists = await imageExistsInCloudinary(publicId);
     if (exists) {
@@ -74,16 +75,33 @@ export async function getNodeImage(node) {
     }
   }
 
+  // If image doesn't exist and autoGenerate is true, generate it
+  if (autoGenerate && isRecraftConfigured()) {
+    console.log(`Auto-generating image for node: ${name}`);
+    const generatedUrl = await generateAndStoreNodeImage(node);
+    return generatedUrl;
+  }
+
   // If no cached image, return null (will use default circle)
   return null;
 }
 
 /**
+ * Delay helper function
+ * @param {number} ms - Milliseconds to delay
+ * @returns {Promise<void>}
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Generate and store image for a node
  * @param {Object} node - Network node object
+ * @param {number} delayMs - Delay before generation (for rate limiting)
  * @returns {Promise<string|null>} - Generated image URL or null
  */
-export async function generateAndStoreNodeImage(node) {
+export async function generateAndStoreNodeImage(node, delayMs = 0) {
   const { id, name, type } = node;
 
   // Check if Recraft is configured
@@ -93,34 +111,50 @@ export async function generateAndStoreNodeImage(node) {
   }
 
   try {
+    // Apply rate limiting delay
+    if (delayMs > 0) {
+      console.log(`Waiting ${delayMs}ms before generating image for ${name}...`);
+      await delay(delayMs);
+    }
+
+    console.log(`Generating image for node: ${name} (type: ${type})`);
+
     // Generate SVG using Recraft
     const generatedUrl = await generateNetworkDeviceSVG(name, type);
-    
+
     if (!generatedUrl) {
       console.warn(`Failed to generate image for node ${name}`);
       return null;
     }
 
+    console.log(`Generated image URL for ${name}: ${generatedUrl}`);
+
     // Upload to Cloudinary if configured
     if (isCloudinaryConfigured()) {
       const publicId = generateNodePublicId(id, name);
+      console.log(`Uploading to Cloudinary with publicId: ${publicId}`);
+
       const uploadResult = await uploadImageToCloudinary(generatedUrl, publicId);
-      
+
       if (uploadResult && uploadResult.secure_url) {
         const optimizedUrl = getOptimizedNodeImageUrl(publicId, 64);
-        
+        console.log(`Successfully uploaded and cached image for ${name}: ${optimizedUrl}`);
+
         // Cache the result
         imageCache.set(id, optimizedUrl);
         saveCacheToStorage();
-        
+
         return optimizedUrl;
+      } else {
+        console.warn(`Cloudinary upload failed for ${name}, using generated URL directly`);
       }
     }
 
     // If Cloudinary upload failed, cache the Recraft URL directly
+    console.log(`Caching Recraft URL directly for ${name}`);
     imageCache.set(id, generatedUrl);
     saveCacheToStorage();
-    
+
     return generatedUrl;
   } catch (error) {
     console.error(`Error generating image for node ${name}:`, error);
@@ -137,19 +171,27 @@ export async function generateAndStoreNodeImage(node) {
 export async function batchGenerateNodeImages(nodes, onProgress = null) {
   const results = {};
   const total = nodes.length;
+  let generatedCount = 0;
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
-    
+
     // Check if already has image
-    const existingImage = await getNodeImage(node);
+    const existingImage = await getNodeImage(node, false);
     if (existingImage) {
       results[node.id] = existingImage;
+      console.log(`Using cached image for node ${node.id}`);
     } else {
-      // Generate new image
-      const imageUrl = await generateAndStoreNodeImage(node);
+      // Generate new image with rate limiting delay
+      // Recraft API has rate limits, so we add delays between requests
+      // Typical rate limit is ~1 request per 2-3 seconds
+      const delayMs = generatedCount * 3000; // 3 seconds between each generation
+      console.log(`Generating image ${generatedCount + 1} for node ${node.id} (delay: ${delayMs}ms)`);
+
+      const imageUrl = await generateAndStoreNodeImage(node, delayMs);
       if (imageUrl) {
         results[node.id] = imageUrl;
+        generatedCount++;
       }
     }
 
@@ -157,11 +199,9 @@ export async function batchGenerateNodeImages(nodes, onProgress = null) {
     if (onProgress) {
       onProgress(i + 1, total);
     }
-
-    // Add small delay to avoid rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
+  console.log(`Batch generation complete: ${generatedCount} images generated, ${total - generatedCount} from cache`);
   return results;
 }
 

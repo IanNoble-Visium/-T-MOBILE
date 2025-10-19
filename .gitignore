@@ -1,2 +1,5 @@
 node_modules
 .env
+backup.bat
+logs/*
+backup.bat

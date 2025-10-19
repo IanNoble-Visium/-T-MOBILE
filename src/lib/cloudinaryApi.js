@@ -6,7 +6,7 @@
 const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dod8ajzjd';
 const CLOUDINARY_API_KEY = import.meta.env.VITE_CLOUDINARY_API_KEY;
 const CLOUDINARY_API_SECRET = import.meta.env.VITE_CLOUDINARY_API_SECRET;
-const CLOUDINARY_UPLOAD_PRESET = 'tmobile_network_nodes'; // You may need to create this in Cloudinary dashboard
+// Note: Upload preset is optional - we use authenticated upload instead
 
 /**
  * Upload an image URL to Cloudinary
@@ -14,18 +14,50 @@ const CLOUDINARY_UPLOAD_PRESET = 'tmobile_network_nodes'; // You may need to cre
  * @param {string} publicId - Public ID for the uploaded image
  * @returns {Promise<Object>} - Cloudinary response with secure_url
  */
+/**
+ * Generate SHA1 signature for Cloudinary authenticated upload
+ * @param {string} str - String to hash
+ * @returns {Promise<string>} - SHA1 hash in hex format
+ */
+async function sha1(str) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  return hashHex;
+}
+
 export async function uploadImageToCloudinary(imageUrl, publicId) {
-  if (!CLOUDINARY_CLOUD_NAME) {
-    console.warn('Cloudinary not configured');
+  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
+    console.warn('Cloudinary not fully configured');
     return null;
   }
 
   try {
     const formData = new FormData();
+
+    // Use the image URL as the file source - Cloudinary will fetch it
     formData.append('file', imageUrl);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
     formData.append('public_id', publicId);
     formData.append('folder', 'tmobile/network-nodes');
+    formData.append('resource_type', 'auto');
+    formData.append('api_key', CLOUDINARY_API_KEY);
+
+    // Add timestamp for authenticated uploads
+    const timestamp = Math.floor(Date.now() / 1000);
+    formData.append('timestamp', timestamp);
+
+    // Create signature for authenticated upload
+    // IMPORTANT: The signature must include ALL parameters in alphabetical order
+    // Signature = SHA1(folder=X&public_id=Y&timestamp=Z&api_secret=SECRET)
+    const signatureString = `folder=tmobile/network-nodes&public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    const signature = await sha1(signatureString);
+    formData.append('signature', signature);
+
+    console.log(`Using authenticated upload with signature for: ${publicId}`);
+    console.log(`Signature string: folder=tmobile/network-nodes&public_id=${publicId}&timestamp=${timestamp}[SECRET]`);
+    console.log(`Uploading image to Cloudinary: ${publicId} from ${imageUrl}`);
 
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -35,16 +67,23 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
       }
     );
 
+    console.log(`Cloudinary upload response status: ${response.status}`);
+
     if (!response.ok) {
       const error = await response.json();
       console.error('Cloudinary upload error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return null;
     }
 
     const data = await response.json();
+    console.log(`Successfully uploaded image to Cloudinary: ${publicId}`);
+    console.log(`Cloudinary response:`, data);
+    console.log(`Cloudinary secure_url:`, data.secure_url);
     return data;
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
+    console.error('Error details:', error.message);
     return null;
   }
 }
@@ -93,9 +132,31 @@ export function generateNodePublicId(nodeId, nodeName) {
 export async function imageExistsInCloudinary(publicId) {
   try {
     const url = getCloudinaryUrl(publicId);
-    const response = await fetch(url, { method: 'HEAD' });
-    return response.ok;
+    // Try to load the image as an Image object - this is more reliable than fetch
+    return new Promise((resolve) => {
+      const img = new Image();
+      // Set a timeout in case the image takes too long to load
+      const timeout = setTimeout(() => {
+        console.warn(`Timeout checking image in Cloudinary: ${publicId}`);
+        resolve(false);
+      }, 5000);
+
+      img.onload = () => {
+        clearTimeout(timeout);
+        console.log(`Image exists in Cloudinary: ${publicId}`);
+        resolve(true);
+      };
+
+      img.onerror = () => {
+        clearTimeout(timeout);
+        console.log(`Image does not exist in Cloudinary: ${publicId}`);
+        resolve(false);
+      };
+
+      img.src = url;
+    });
   } catch (error) {
+    console.warn(`Error checking if image exists in Cloudinary (${publicId}):`, error);
     return false;
   }
 }

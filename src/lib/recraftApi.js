@@ -19,6 +19,10 @@ export async function generateSVGImage(prompt, options = {}) {
   }
 
   try {
+    console.log(`Calling Recraft API with prompt: ${prompt}`);
+    console.log(`API URL: ${RECRAFT_API_URL}/images/generations`);
+    console.log(`API Key (first 20 chars): ${RECRAFT_API_KEY.substring(0, 20)}...`);
+
     const response = await fetch(`${RECRAFT_API_URL}/images/generations`, {
       method: 'POST',
       headers: {
@@ -35,16 +39,37 @@ export async function generateSVGImage(prompt, options = {}) {
       })
     });
 
+    console.log(`Recraft API response status: ${response.status} ${response.statusText}`);
+
     if (!response.ok) {
-      const error = await response.json();
+      const contentType = response.headers.get('content-type');
+      let error;
+
+      if (contentType && contentType.includes('application/json')) {
+        error = await response.json();
+      } else {
+        error = await response.text();
+      }
+
       console.error('Recraft API error:', error);
+      console.error('Response status:', response.status);
       return null;
     }
 
     const data = await response.json();
+    console.log(`Recraft API response:`, data);
+    console.log(`Recraft API response keys:`, Object.keys(data));
+    if (data.data) {
+      console.log(`Recraft API data array:`, data.data);
+      if (data.data[0]) {
+        console.log(`Recraft API first item:`, data.data[0]);
+        console.log(`Recraft API first item keys:`, Object.keys(data.data[0]));
+      }
+    }
     return data;
   } catch (error) {
     console.error('Error generating SVG with Recraft:', error);
+    console.error('Error details:', error.message);
     return null;
   }
 }
@@ -70,15 +95,19 @@ export async function generateNetworkDeviceSVG(nodeName, nodeType) {
   const basePrompt = typePrompts[nodeType] || typePrompts.router;
   const fullPrompt = `Create ${basePrompt} for T-Mobile network device: ${nodeName}`;
 
+  console.log(`Generating network device SVG for ${nodeName} (type: ${nodeType})`);
+
   const result = await generateSVGImage(fullPrompt, {
     style: 'digital_illustration',
-    size: '512x512'
+    size: '1024x1024'  // Changed from 512x512 - Recraft API doesn't support that size
   });
 
   if (result && result.data && result.data[0]) {
+    console.log(`Successfully generated SVG for ${nodeName}: ${result.data[0].url}`);
     return result.data[0].url;
   }
 
+  console.warn(`Failed to generate SVG for ${nodeName}. Result:`, result);
   return null;
 }
 

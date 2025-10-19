@@ -36,15 +36,25 @@ const NetworkTopologyVisualizationEnhanced = ({
   useEffect(() => {
     const loadImages = async () => {
       const images = {}
+
       for (const node of nodes) {
-        const imageUrl = await getNodeImage(node)
-        if (imageUrl) {
-          images[node.id] = imageUrl
+        try {
+          // Only try to get existing images from cache/Cloudinary
+          // Do NOT auto-generate here - use batch generation instead
+          let imageUrl = await getNodeImage(node, false)
+
+          if (imageUrl) {
+            images[node.id] = imageUrl
+          }
+        } catch (error) {
+          console.error(`Error loading image for node ${node.id}:`, error)
         }
       }
+
+      console.log(`Loaded ${Object.keys(images).length} node images from cache/Cloudinary`)
       setNodeImages(images)
     }
-    
+
     if (nodes.length > 0) {
       loadImages()
     }
