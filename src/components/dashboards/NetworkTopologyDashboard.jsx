@@ -3,6 +3,8 @@ import { Network, AlertCircle, Filter, X, Box, Map } from 'lucide-react'
 import useNetworkDataset from '@/hooks/useNetworkDataset'
 import useAlarmSystem from '@/hooks/useAlarmSystem'
 import NetworkTopologyVisualization from '@/components/NetworkTopologyVisualization'
+import NetworkTopologyVisualizationEnhanced from '@/components/NetworkTopologyVisualizationEnhanced'
+import NodeImageGenerator from '@/components/NodeImageGenerator'
 import NetworkTopology3D from '@/components/NetworkTopology3D'
 import NetworkNodeDetail from '@/components/NetworkNodeDetail'
 import AlarmDashboard from '@/components/AlarmDashboard'
@@ -46,6 +48,7 @@ const NetworkTopologyDashboard = () => {
   const [showAlarmPanel, setShowAlarmPanel] = useState(true)
   const [layout, setLayout] = useState('force')
   const [view3D, setView3D] = useState(false)
+  const [useEnhanced, setUseEnhanced] = useState(true)
 
   if (loading) {
     return (
@@ -231,6 +234,13 @@ const NetworkTopologyDashboard = () => {
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold">Network Graph</h3>
           <div className="flex gap-2">
+            <NodeImageGenerator 
+              nodes={filteredNodes}
+              onComplete={() => {
+                // Refresh visualization after images are generated
+                setUseEnhanced(true)
+              }}
+            />
             <button
               onClick={() => setView3D(!view3D)}
               className={`text-sm px-3 py-1 rounded flex items-center gap-2 transition-colors ${
@@ -263,17 +273,31 @@ const NetworkTopologyDashboard = () => {
           /* 2D View - with Alarm Panel */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2 h-[600px] rounded-lg overflow-hidden">
-              <NetworkTopologyVisualization
-                nodes={filteredNodes}
-                edges={filteredEdges}
-                onNodeClick={handleNodeClick}
-                onEdgeClick={handleEdgeClick}
-                selectedNodeId={selectedNode?.id}
-                selectedEdgeId={selectedEdge?.id}
-                alarmedNodeIds={alarmedNodeIds}
-                alarmedEdgeIds={alarmedEdgeIds}
-                layout={layout}
-              />
+              {useEnhanced ? (
+                <NetworkTopologyVisualizationEnhanced
+                  nodes={filteredNodes}
+                  edges={filteredEdges}
+                  onNodeClick={handleNodeClick}
+                  onEdgeClick={handleEdgeClick}
+                  selectedNodeId={selectedNode?.id}
+                  selectedEdgeId={selectedEdge?.id}
+                  alarmedNodeIds={alarmedNodeIds}
+                  alarmedEdgeIds={alarmedEdgeIds}
+                  layout={layout}
+                />
+              ) : (
+                <NetworkTopologyVisualization
+                  nodes={filteredNodes}
+                  edges={filteredEdges}
+                  onNodeClick={handleNodeClick}
+                  onEdgeClick={handleEdgeClick}
+                  selectedNodeId={selectedNode?.id}
+                  selectedEdgeId={selectedEdge?.id}
+                  alarmedNodeIds={alarmedNodeIds}
+                  alarmedEdgeIds={alarmedEdgeIds}
+                  layout={layout}
+                />
+              )}
             </div>
             {showAlarmPanel && (
               <div className="h-[600px] overflow-hidden">
