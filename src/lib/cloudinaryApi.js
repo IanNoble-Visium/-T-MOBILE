@@ -30,7 +30,10 @@ async function sha1(str) {
 
 export async function uploadImageToCloudinary(imageUrl, publicId) {
   if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) {
-    console.warn('Cloudinary not fully configured');
+    console.error('❌ Cloudinary not fully configured');
+    console.error(`  - Cloud Name: ${CLOUDINARY_CLOUD_NAME ? '✓' : '✗'}`);
+    console.error(`  - API Key: ${CLOUDINARY_API_KEY ? '✓' : '✗'}`);
+    console.error(`  - API Secret: ${CLOUDINARY_API_SECRET ? '✓' : '✗'}`);
     return null;
   }
 
@@ -40,7 +43,8 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
     // Use the image URL as the file source - Cloudinary will fetch it
     formData.append('file', imageUrl);
     formData.append('public_id', publicId);
-    formData.append('folder', 'tmobile/network-nodes');
+    // NOTE: public_id already includes the folder path (tmobile/network-nodes/node-XXX)
+    // so we do NOT add a separate folder parameter
     formData.append('resource_type', 'auto');
     formData.append('api_key', CLOUDINARY_API_KEY);
 
@@ -50,13 +54,14 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
 
     // Create signature for authenticated upload
     // IMPORTANT: The signature must include ALL parameters in alphabetical order
-    // Signature = SHA1(folder=X&public_id=Y&timestamp=Z&api_secret=SECRET)
-    const signatureString = `folder=tmobile/network-nodes&public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    // API secret is appended at the end WITHOUT a separator
+    // Format: public_id=X&timestamp=Y{API_SECRET}
+    const signatureString = `public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
     const signature = await sha1(signatureString);
     formData.append('signature', signature);
 
     console.log(`Using authenticated upload with signature for: ${publicId}`);
-    console.log(`Signature string: folder=tmobile/network-nodes&public_id=${publicId}&timestamp=${timestamp}[SECRET]`);
+    console.log(`Signature string: public_id=${publicId}&timestamp=${timestamp}[SECRET]`);
     console.log(`Uploading image to Cloudinary: ${publicId} from ${imageUrl}`);
 
     const response = await fetch(
@@ -96,16 +101,20 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
  */
 export function getCloudinaryUrl(publicId, transformations = {}) {
   const baseUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-  
+
   const transformString = Object.entries(transformations)
     .map(([key, value]) => `${key}_${value}`)
     .join(',');
 
+  // Always add format specification to ensure proper image delivery
+  // Use 'auto' format to let Cloudinary choose the best format
+  const formatSpec = 'f_auto';
+
   if (transformString) {
-    return `${baseUrl}/${transformString}/${publicId}`;
+    return `${baseUrl}/${transformString},${formatSpec}/${publicId}`;
   }
 
-  return `${baseUrl}/${publicId}`;
+  return `${baseUrl}/${formatSpec}/${publicId}`;
 }
 
 /**
@@ -166,7 +175,20 @@ export async function imageExistsInCloudinary(publicId) {
  * @returns {boolean}
  */
 export function isCloudinaryConfigured() {
-  return !!CLOUDINARY_CLOUD_NAME;
+  return !!(CLOUDINARY_CLOUD_NAME && CLOUDINARY_API_KEY && CLOUDINARY_API_SECRET);
+}
+
+/**
+ * Get Cloudinary configuration status for debugging
+ * @returns {Object}
+ */
+export function getCloudinaryConfigStatus() {
+  return {
+    cloudName: CLOUDINARY_CLOUD_NAME ? `${CLOUDINARY_CLOUD_NAME.substring(0, 3)}...` : 'NOT SET',
+    apiKey: CLOUDINARY_API_KEY ? `${CLOUDINARY_API_KEY.substring(0, 3)}...` : 'NOT SET',
+    apiSecret: CLOUDINARY_API_SECRET ? `${CLOUDINARY_API_SECRET.substring(0, 3)}...` : 'NOT SET',
+    isConfigured: isCloudinaryConfigured()
+  };
 }
 
 /**
@@ -180,8 +202,8 @@ export function getOptimizedNodeImageUrl(publicId, size = 64) {
     w: size,
     h: size,
     c: 'fill',
-    f: 'auto',
     q: 'auto'
+    // Note: 'f' (format) is handled by getCloudinaryUrl with 'f_auto'
   });
 }
 

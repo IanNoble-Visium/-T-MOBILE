@@ -23,20 +23,26 @@ export async function generateSVGImage(prompt, options = {}) {
     console.log(`API URL: ${RECRAFT_API_URL}/images/generations`);
     console.log(`API Key (first 20 chars): ${RECRAFT_API_KEY.substring(0, 20)}...`);
 
+    const requestBody = {
+      prompt,
+      style: options.style || 'digital_illustration',
+      model: options.model || 'recraftv3',
+      response_format: options.format || 'url',
+      size: options.size || '1024x1024',
+      // Request transparent background instead of white
+      background: options.background || 'transparent',
+      ...options
+    };
+
+    console.log(`Request body:`, requestBody);
+
     const response = await fetch(`${RECRAFT_API_URL}/images/generations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${RECRAFT_API_KEY}`
       },
-      body: JSON.stringify({
-        prompt,
-        style: options.style || 'digital_illustration',
-        model: options.model || 'recraftv3',
-        response_format: options.format || 'url',
-        size: options.size || '1024x1024',
-        ...options
-      })
+      body: JSON.stringify(requestBody)
     });
 
     console.log(`Recraft API response status: ${response.status} ${response.statusText}`);
@@ -96,10 +102,12 @@ export async function generateNetworkDeviceSVG(nodeName, nodeType) {
   const fullPrompt = `Create ${basePrompt} for T-Mobile network device: ${nodeName}`;
 
   console.log(`Generating network device SVG for ${nodeName} (type: ${nodeType})`);
+  console.log(`Requesting transparent background for better visualization`);
 
   const result = await generateSVGImage(fullPrompt, {
     style: 'digital_illustration',
-    size: '1024x1024'  // Changed from 512x512 - Recraft API doesn't support that size
+    size: '1024x1024',  // Changed from 512x512 - Recraft API doesn't support that size
+    background: 'transparent'  // Request transparent background instead of white
   });
 
   if (result && result.data && result.data[0]) {

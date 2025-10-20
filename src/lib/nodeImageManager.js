@@ -172,27 +172,42 @@ export async function batchGenerateNodeImages(nodes, onProgress = null) {
   const results = {};
   const total = nodes.length;
   let generatedCount = 0;
+  let cachedCount = 0;
+  let failedCount = 0;
+  const failedNodes = [];
 
   for (let i = 0; i < nodes.length; i++) {
     const node = nodes[i];
 
-    // Check if already has image
-    const existingImage = await getNodeImage(node, false);
-    if (existingImage) {
-      results[node.id] = existingImage;
-      console.log(`Using cached image for node ${node.id}`);
-    } else {
-      // Generate new image with rate limiting delay
-      // Recraft API has rate limits, so we add delays between requests
-      // Typical rate limit is ~1 request per 2-3 seconds
-      const delayMs = generatedCount * 3000; // 3 seconds between each generation
-      console.log(`Generating image ${generatedCount + 1} for node ${node.id} (delay: ${delayMs}ms)`);
+    try {
+      // Check if already has image
+      const existingImage = await getNodeImage(node, false);
+      if (existingImage) {
+        results[node.id] = existingImage;
+        cachedCount++;
+        console.log(`Using cached image for node ${node.id}`);
+      } else {
+        // Generate new image with rate limiting delay
+        // Recraft API has rate limits, so we add delays between requests
+        // Typical rate limit is ~1 request per 2-3 seconds
+        const delayMs = generatedCount * 3000; // 3 seconds between each generation
+        console.log(`Generating image ${generatedCount + 1} for node ${node.id} (delay: ${delayMs}ms)`);
 
-      const imageUrl = await generateAndStoreNodeImage(node, delayMs);
-      if (imageUrl) {
-        results[node.id] = imageUrl;
-        generatedCount++;
+        const imageUrl = await generateAndStoreNodeImage(node, delayMs);
+        if (imageUrl) {
+          results[node.id] = imageUrl;
+          generatedCount++;
+          console.log(`Successfully generated image for node ${node.id}`);
+        } else {
+          failedCount++;
+          failedNodes.push(node.id);
+          console.warn(`Failed to generate image for node ${node.id}, will retry later`);
+        }
       }
+    } catch (error) {
+      failedCount++;
+      failedNodes.push(node.id);
+      console.error(`Error processing node ${node.id}:`, error);
     }
 
     // Report progress
@@ -201,7 +216,16 @@ export async function batchGenerateNodeImages(nodes, onProgress = null) {
     }
   }
 
-  console.log(`Batch generation complete: ${generatedCount} images generated, ${total - generatedCount} from cache`);
+  console.log(`Batch generation complete:`);
+  console.log(`  - Generated: ${generatedCount} images`);
+  console.log(`  - Cached: ${cachedCount} images`);
+  console.log(`  - Failed: ${failedCount} images`);
+  console.log(`  - Total processed: ${generatedCount + cachedCount} / ${total}`);
+
+  if (failedNodes.length > 0) {
+    console.warn(`Failed nodes: ${failedNodes.join(', ')}`);
+  }
+
   return results;
 }
 
