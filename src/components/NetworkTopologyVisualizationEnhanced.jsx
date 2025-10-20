@@ -37,6 +37,9 @@ const NetworkTopologyVisualizationEnhanced = ({
   const [regeneratorOpen, setRegeneratorOpen] = useState(false)
   const [selectedNodeForRegeneration, setSelectedNodeForRegeneration] = useState(null)
 
+  // Ref to store image elements for direct updates
+  const imageElementsRef = useRef(null)
+
   // Load node images
   useEffect(() => {
     const loadImages = async () => {
@@ -64,6 +67,21 @@ const NetworkTopologyVisualizationEnhanced = ({
       loadImages()
     }
   }, [nodes])
+
+  // Update image elements when nodeImages changes (for regeneration)
+  useEffect(() => {
+    if (imageElementsRef.current) {
+      console.log('Updating image elements with new nodeImages:', nodeImages);
+
+      imageElementsRef.current
+        .attr('xlink:href', d => {
+          const imageUrl = nodeImages[d.id] || '';
+          console.log(`Updating image for node ${d.id}: ${imageUrl}`);
+          return imageUrl;
+        })
+        .attr('opacity', d => nodeImages[d.id] ? 1 : 0);
+    }
+  }, [nodeImages]);
 
   // Update dimensions on mount and resize
   useEffect(() => {
@@ -261,7 +279,7 @@ const NetworkTopologyVisualizationEnhanced = ({
       })
 
     // Add images for nodes that have them
-    nodeGroup.append('image')
+    const imageElements = nodeGroup.append('image')
       .attr('xlink:href', d => nodeImages[d.id] || '')
       .attr('x', d => {
         const size = selectedNodeId === d.id ? 32 : alarmedNodeIds.includes(d.id) ? 28 : 24
@@ -285,6 +303,7 @@ const NetworkTopologyVisualizationEnhanced = ({
       .style('pointer-events', 'none')
 
     nodeRef.current = nodeGroup
+    imageElementsRef.current = imageElements
 
     // Add labels
     const labels = g.append('g')
@@ -393,13 +412,22 @@ const NetworkTopologyVisualizationEnhanced = ({
       const newImageUrl = await regenerateSingleNodeImage(options.node, options);
 
       if (newImageUrl) {
-        // Update the nodeImages state to reflect the new image
-        setNodeImages(prev => ({
-          ...prev,
-          [options.node.id]: newImageUrl
-        }));
+        console.log(`Received new image URL: ${newImageUrl}`);
+        console.log(`Updating nodeImages state for node ${options.node.id}`);
 
-        console.log(`Successfully regenerated image for ${options.node.name}`);
+        // Update the nodeImages state to reflect the new image
+        setNodeImages(prev => {
+          const updated = {
+            ...prev,
+            [options.node.id]: newImageUrl
+          };
+          console.log('Updated nodeImages state:', updated);
+          return updated;
+        });
+
+        console.log(`Successfully regenerated and updated image for ${options.node.name}`);
+      } else {
+        console.warn('No image URL returned from regeneration');
       }
     } catch (error) {
       console.error('Error regenerating image:', error);

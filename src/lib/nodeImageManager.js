@@ -289,14 +289,18 @@ export async function regenerateSingleNodeImage(node, options = {}) {
       const uploadResult = await uploadImageToCloudinary(finalImageUrl, publicId);
 
       if (uploadResult && uploadResult.secure_url) {
+        // Add cache-busting timestamp to force browser to reload the new image
+        const timestamp = Date.now();
         const optimizedUrl = getOptimizedNodeImageUrl(publicId, 64);
-        console.log(`Successfully uploaded and cached image for ${name}: ${optimizedUrl}`);
+        const cacheBustedUrl = `${optimizedUrl}?v=${timestamp}`;
 
-        // Update cache
-        imageCache.set(id, optimizedUrl);
+        console.log(`Successfully uploaded and cached image for ${name}: ${cacheBustedUrl}`);
+
+        // Update cache with cache-busted URL
+        imageCache.set(id, cacheBustedUrl);
         saveCacheToStorage();
 
-        return optimizedUrl;
+        return cacheBustedUrl;
       } else {
         console.warn(`Cloudinary upload failed for ${name}, using generated URL directly`);
       }
