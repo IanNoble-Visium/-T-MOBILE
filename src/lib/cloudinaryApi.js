@@ -40,29 +40,51 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
   try {
     const formData = new FormData();
 
-    // Use the image URL as the file source - Cloudinary will fetch it
-    formData.append('file', imageUrl);
-    formData.append('public_id', publicId);
-    // NOTE: public_id already includes the folder path (tmobile/network-nodes/node-XXX)
-    // so we do NOT add a separate folder parameter
-    formData.append('resource_type', 'auto');
-    formData.append('api_key', CLOUDINARY_API_KEY);
-
     // Add timestamp for authenticated uploads
     const timestamp = Math.floor(Date.now() / 1000);
+
+    // Extract folder path and filename from publicId
+    // publicId format: "tmobile/network-nodes/node-001_name"
+    // We need to split this into folder and public_id for Cloudinary's folder mode
+    const lastSlashIndex = publicId.lastIndexOf('/');
+    const folder = lastSlashIndex > 0 ? publicId.substring(0, lastSlashIndex) : '';
+    const filename = lastSlashIndex > 0 ? publicId.substring(lastSlashIndex + 1) : publicId;
+
+    console.log(`📁 Folder: ${folder}`);
+    console.log(`📄 Filename: ${filename}`);
+
+    // Use the image URL as the file source - Cloudinary will fetch it
+    formData.append('file', imageUrl);
+
+    // IMPORTANT: For Cloudinary's dynamic folder mode, we need to:
+    // 1. Use the 'folder' parameter to specify the folder path
+    // 2. Use the 'public_id' parameter for just the filename (without folder path)
+    if (folder) {
+      formData.append('folder', folder);
+    }
+    formData.append('public_id', filename);
     formData.append('timestamp', timestamp);
+    formData.append('api_key', CLOUDINARY_API_KEY);
 
     // Create signature for authenticated upload
     // IMPORTANT: The signature must include ALL parameters in alphabetical order
+    // (except file, api_key, and signature itself)
     // API secret is appended at the end WITHOUT a separator
-    // Format: public_id=X&timestamp=Y{API_SECRET}
-    const signatureString = `public_id=${publicId}&timestamp=${timestamp}${CLOUDINARY_API_SECRET}`;
+    // Parameters in alphabetical order: folder, public_id, timestamp
+    let signatureParams = [];
+    if (folder) {
+      signatureParams.push(`folder=${folder}`);
+    }
+    signatureParams.push(`public_id=${filename}`);
+    signatureParams.push(`timestamp=${timestamp}`);
+
+    const signatureString = signatureParams.join('&') + CLOUDINARY_API_SECRET;
     const signature = await sha1(signatureString);
     formData.append('signature', signature);
 
-    console.log(`Using authenticated upload with signature for: ${publicId}`);
-    console.log(`Signature string: public_id=${publicId}&timestamp=${timestamp}[SECRET]`);
-    console.log(`Uploading image to Cloudinary: ${publicId} from ${imageUrl}`);
+    console.log(`Using authenticated upload with signature`);
+    console.log(`Signature params: ${signatureParams.join('&')}[SECRET]`);
+    console.log(`Uploading image to Cloudinary: ${folder}/${filename} from ${imageUrl}`);
 
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
@@ -82,9 +104,22 @@ export async function uploadImageToCloudinary(imageUrl, publicId) {
     }
 
     const data = await response.json();
-    console.log(`Successfully uploaded image to Cloudinary: ${publicId}`);
-    console.log(`Cloudinary response:`, data);
-    console.log(`Cloudinary secure_url:`, data.secure_url);
+    console.log(`✅ Successfully uploaded image to Cloudinary`);
+    console.log(`   Requested: ${publicId}`);
+    console.log(`   Cloudinary public_id: ${data.public_id}`);
+    console.log(`   Cloudinary folder: ${data.folder || 'root'}`);
+    console.log(`   Cloudinary secure_url: ${data.secure_url}`);
+
+    // Verify the image was uploaded to the correct location
+    const expectedPublicId = publicId;
+    const actualPublicId = data.public_id;
+
+    if (actualPublicId !== expectedPublicId) {
+      console.warn(`⚠️ WARNING: Uploaded public_id (${actualPublicId}) does not match requested public_id (${expectedPublicId})`);
+    } else {
+      console.log(`✅ Public ID matches! Image uploaded to correct location.`);
+    }
+
     return data;
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
@@ -201,8 +236,9 @@ export function getOptimizedNodeImageUrl(publicId, size = 64) {
   return getCloudinaryUrl(publicId, {
     w: size,
     h: size,
-    c: 'fill',
-    q: 'auto'
+    c: 'fit',  // Use 'fit' instead of 'fill' to preserve entire image without cropping
+    q: 'auto',
+    b: 'transparent'  // Explicitly set transparent background for padding if needed
     // Note: 'f' (format) is handled by getCloudinaryUrl with 'f_auto'
   });
 }

@@ -168,7 +168,7 @@ export async function generateAndStoreNodeImage(node, delayMs = 0) {
  * @param {Function} onProgress - Progress callback (current, total)
  * @returns {Promise<Object>} - Map of node IDs to image URLs
  */
-export async function batchGenerateNodeImages(nodes, onProgress = null) {
+export async function batchGenerateNodeImages(nodes, onProgress = null, forceRegenerate = false) {
   const results = {};
   const total = nodes.length;
   let generatedCount = 0;
@@ -180,8 +180,8 @@ export async function batchGenerateNodeImages(nodes, onProgress = null) {
     const node = nodes[i];
 
     try {
-      // Check if already has image
-      const existingImage = await getNodeImage(node, false);
+      // Check if already has image (unless force regenerate is enabled)
+      const existingImage = forceRegenerate ? null : await getNodeImage(node, false);
       if (existingImage) {
         results[node.id] = existingImage;
         cachedCount++;
@@ -227,6 +227,91 @@ export async function batchGenerateNodeImages(nodes, onProgress = null) {
   }
 
   return results;
+}
+
+/**
+ * Regenerate image for a single node with custom options
+ * @param {Object} node - Network node object
+ * @param {Object} options - Regeneration options
+ * @param {string} options.deviceType - Device type for prompt generation
+ * @param {string} options.style - Recraft AI style
+ * @param {string} options.customPrompt - Custom prompt additions
+ * @param {string} options.fullPrompt - Complete prompt to use
+ * @returns {Promise<string|null>} - Generated image URL or null
+ */
+export async function regenerateSingleNodeImage(node, options = {}) {
+  const { id, name } = node;
+  const { deviceType, style, customPrompt, fullPrompt } = options;
+
+  // Check if Recraft is configured
+  if (!isRecraftConfigured()) {
+    throw new Error('Recraft API not configured. Cannot generate images.');
+  }
+
+  try {
+    console.log(`Regenerating image for node: ${name}`);
+    console.log(`Options:`, { deviceType, style, customPrompt });
+
+    // Import the necessary functions from recraftApi
+    const { generateSVGImage, removeBackground } = await import('./recraftApi');
+
+    // Step 1: Generate the image with custom options
+    const result = await generateSVGImage(fullPrompt, {
+      style: style || 'digital_illustration',
+      size: '1024x1024',
+      response_format: 'url'
+    });
+
+    if (!result || !result.data || !result.data[0]) {
+      throw new Error(`Failed to generate image for ${name}`);
+    }
+
+    const generatedImageUrl = result.data[0].url;
+    console.log(`Successfully generated image for ${name}: ${generatedImageUrl}`);
+
+    // Step 2: Remove background to make it transparent
+    console.log(`Removing background from image for ${name}...`);
+    const transparentImageUrl = await removeBackground(generatedImageUrl);
+
+    if (!transparentImageUrl) {
+      console.warn(`Failed to remove background for ${name}, using original image`);
+      // Use original image as fallback
+    }
+
+    const finalImageUrl = transparentImageUrl || generatedImageUrl;
+    console.log(`Successfully created transparent image for ${name}: ${finalImageUrl}`);
+
+    // Step 3: Upload to Cloudinary if configured (overwrite existing)
+    if (isCloudinaryConfigured()) {
+      const publicId = generateNodePublicId(id, name);
+      console.log(`Uploading to Cloudinary with publicId: ${publicId} (will overwrite existing)`);
+
+      const uploadResult = await uploadImageToCloudinary(finalImageUrl, publicId);
+
+      if (uploadResult && uploadResult.secure_url) {
+        const optimizedUrl = getOptimizedNodeImageUrl(publicId, 64);
+        console.log(`Successfully uploaded and cached image for ${name}: ${optimizedUrl}`);
+
+        // Update cache
+        imageCache.set(id, optimizedUrl);
+        saveCacheToStorage();
+
+        return optimizedUrl;
+      } else {
+        console.warn(`Cloudinary upload failed for ${name}, using generated URL directly`);
+      }
+    }
+
+    // If Cloudinary upload failed, cache the generated URL directly
+    console.log(`Caching generated URL directly for ${name}`);
+    imageCache.set(id, finalImageUrl);
+    saveCacheToStorage();
+
+    return finalImageUrl;
+  } catch (error) {
+    console.error(`Error regenerating image for node ${name}:`, error);
+    throw error;
+  }
 }
 
 /**

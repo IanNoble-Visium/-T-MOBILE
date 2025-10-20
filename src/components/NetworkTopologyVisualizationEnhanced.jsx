@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState, useMemo } from 'react'
 import * as d3 from 'd3'
 import { NODE_TYPES, EDGE_TYPES } from '@/lib/networkDataset'
 import { LAYOUT_OPTIONS } from '@/lib/graphLayouts'
-import { getNodeImage } from '@/lib/nodeImageManager'
+import { getNodeImage, regenerateSingleNodeImage } from '@/lib/nodeImageManager'
+import NodeImageRegenerator from './NodeImageRegenerator'
 
 /**
  * Enhanced NetworkTopologyVisualization Component
@@ -31,6 +32,10 @@ const NetworkTopologyVisualizationEnhanced = ({
   const linkRef = useRef(null)
   const nodeRef = useRef(null)
   const labelsRef = useRef(null)
+
+  // State for node image regeneration dialog
+  const [regeneratorOpen, setRegeneratorOpen] = useState(false)
+  const [selectedNodeForRegeneration, setSelectedNodeForRegeneration] = useState(null)
 
   // Load node images
   useEffect(() => {
@@ -216,6 +221,12 @@ const NetworkTopologyVisualizationEnhanced = ({
         event.stopPropagation()
         onNodeClick?.(d)
       })
+      .on('contextmenu', (event, d) => {
+        event.preventDefault()
+        event.stopPropagation()
+        // Open regeneration dialog on right-click
+        handleOpenRegenerator(d)
+      })
       .on('mouseenter', (event, d) => {
         hoveredNodeRef.current = d.id
         updateHoverState()
@@ -373,6 +384,35 @@ const NetworkTopologyVisualizationEnhanced = ({
     }
   }, [nodes, edges, dimensions, selectedNodeId, selectedEdgeId, alarmedNodeIds, alarmedEdgeIds, onNodeClick, onEdgeClick, layout, nodeImages])
 
+  // Handle node image regeneration
+  const handleRegenerateImage = async (options) => {
+    try {
+      console.log('Regenerating image with options:', options);
+
+      // Call the regeneration function
+      const newImageUrl = await regenerateSingleNodeImage(options.node, options);
+
+      if (newImageUrl) {
+        // Update the nodeImages state to reflect the new image
+        setNodeImages(prev => ({
+          ...prev,
+          [options.node.id]: newImageUrl
+        }));
+
+        console.log(`Successfully regenerated image for ${options.node.name}`);
+      }
+    } catch (error) {
+      console.error('Error regenerating image:', error);
+      throw error;
+    }
+  };
+
+  // Handle opening the regeneration dialog
+  const handleOpenRegenerator = (node) => {
+    setSelectedNodeForRegeneration(node);
+    setRegeneratorOpen(true);
+  };
+
   return (
     <div className="w-full h-full bg-background rounded-lg border border-border overflow-hidden relative">
       <svg
@@ -413,9 +453,9 @@ const NetworkTopologyVisualizationEnhanced = ({
       `}</style>
       
       <div className="absolute bottom-4 left-4 text-xs text-muted-foreground bg-background/80 p-2 rounded">
-        <p>Drag to move • Scroll to zoom • Click nodes/edges for details</p>
+        <p>Drag to move • Scroll to zoom • Click nodes/edges for details • Right-click nodes to regenerate image</p>
       </div>
-      
+
       {/* Legend */}
       <div className="absolute top-4 right-4 bg-background/90 p-3 rounded-lg border border-border text-xs">
         <div className="font-semibold mb-2">Edge Utilization</div>
@@ -436,6 +476,18 @@ const NetworkTopologyVisualizationEnhanced = ({
         <div className="font-semibold mt-3 mb-2">Edge Thickness</div>
         <div className="text-muted-foreground">Based on bandwidth</div>
       </div>
+
+      {/* Node Image Regeneration Dialog */}
+      <NodeImageRegenerator
+        node={selectedNodeForRegeneration}
+        currentImageUrl={selectedNodeForRegeneration ? nodeImages[selectedNodeForRegeneration.id] : null}
+        isOpen={regeneratorOpen}
+        onClose={() => {
+          setRegeneratorOpen(false);
+          setSelectedNodeForRegeneration(null);
+        }}
+        onRegenerate={handleRegenerateImage}
+      />
     </div>
   )
 }

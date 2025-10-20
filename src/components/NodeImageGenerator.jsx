@@ -28,6 +28,7 @@ const NodeImageGenerator = ({ nodes, onComplete }) => {
   const [results, setResults] = useState(null)
   const [config, setConfig] = useState(checkConfiguration())
   const [cacheStats, setCacheStats] = useState(getCacheStats())
+  const [forceRegenerate, setForceRegenerate] = useState(false)
 
   const handleOpen = () => {
     setConfig(checkConfiguration())
@@ -45,12 +46,13 @@ const NodeImageGenerator = ({ nodes, onComplete }) => {
         nodes,
         (current, total) => {
           setProgress({ current, total })
-        }
+        },
+        forceRegenerate
       )
 
       setResults(generatedImages)
       setCacheStats(getCacheStats())
-      
+
       if (onComplete) {
         onComplete(generatedImages)
       }
@@ -144,6 +146,20 @@ const NodeImageGenerator = ({ nodes, onComplete }) => {
                 <span className="text-muted-foreground">Cached Images: </span>
                 <span className="font-semibold">{cacheStats.size}</span>
               </div>
+            </div>
+
+            {/* Force Regenerate Option */}
+            <div className="flex items-center space-x-2 p-3 bg-muted rounded-lg">
+              <input
+                type="checkbox"
+                id="forceRegenerate"
+                checked={forceRegenerate}
+                onChange={(e) => setForceRegenerate(e.target.checked)}
+                className="w-4 h-4 text-[#E20074] bg-gray-100 border-gray-300 rounded focus:ring-[#E20074] focus:ring-2"
+              />
+              <label htmlFor="forceRegenerate" className="text-sm font-medium cursor-pointer">
+                Force regenerate all images (ignore existing images in Cloudinary)
+              </label>
             </div>
 
             {/* Node Information */}
