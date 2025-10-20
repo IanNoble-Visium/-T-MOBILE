@@ -20,16 +20,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, Image as ImageIcon, Sparkles, RefreshCw } from 'lucide-react';
 
+// Device types matching the actual network dataset
 const DEVICE_TYPES = [
+  { value: 'data_center', label: 'Data Center' },
+  { value: 'cell_tower', label: 'Cell Tower' },
   { value: 'router', label: 'Router' },
   { value: 'switch', label: 'Switch' },
-  { value: 'firewall', label: 'Firewall' },
-  { value: 'server', label: 'Server' },
-  { value: 'data_center', label: 'Data Center' },
-  { value: 'endpoint', label: 'Endpoint' },
   { value: 'gateway', label: 'Gateway' },
-  { value: 'load_balancer', label: 'Load Balancer' },
-  { value: 'access_point', label: 'Access Point' },
+  { value: 'firewall', label: 'Firewall' },
 ];
 
 const STYLE_OPTIONS = [
@@ -39,30 +37,29 @@ const STYLE_OPTIONS = [
   { value: 'icon', label: 'Icon Style' },
 ];
 
+// Prompts for each device type in the network dataset
 const TYPE_PROMPTS = {
+  data_center: 'modern data center building with glass facade and server infrastructure, professional architectural visualization',
+  cell_tower: 'high-resolution icon of a cellular tower with antenna arrays and signal transmission equipment, professional tech style, minimalist design',
   router: 'high-resolution icon of a modern network router with clean lines, professional tech style, minimalist design',
   switch: 'high-resolution icon of a network switch with multiple ports, professional tech style, minimalist design',
+  gateway: 'high-resolution icon of a network gateway device with connectivity symbols, professional tech style, minimalist design',
   firewall: 'high-resolution icon of a security firewall with shield symbol, professional tech style, minimalist design',
-  server: 'high-resolution icon of a modern server rack, professional tech style, minimalist design',
-  data_center: 'modern data center building with glass facade and server infrastructure, professional architectural visualization',
-  endpoint: 'high-resolution icon of a computer workstation, professional tech style, minimalist design',
-  gateway: 'high-resolution icon of a network gateway device, professional tech style, minimalist design',
-  load_balancer: 'high-resolution icon of a load balancer with distribution arrows, professional tech style, minimalist design',
-  access_point: 'high-resolution icon of a wireless access point with signal waves, professional tech style, minimalist design',
 };
 
 /**
  * NodeImageRegenerator Component
  * Allows regenerating individual node images with custom prompts and options
  */
-export default function NodeImageRegenerator({ 
-  node, 
+export default function NodeImageRegenerator({
+  node,
   currentImageUrl,
-  isOpen, 
-  onClose, 
-  onRegenerate 
+  isOpen,
+  onClose,
+  onRegenerate
 }) {
-  const [deviceType, setDeviceType] = useState(node?.type || 'router');
+  // Use node's actual type, fallback to data_center if somehow missing
+  const [deviceType, setDeviceType] = useState(node?.type || 'data_center');
   const [style, setStyle] = useState('digital_illustration');
   const [customPrompt, setCustomPrompt] = useState('');
   const [isRegenerating, setIsRegenerating] = useState(false);
@@ -73,17 +70,19 @@ export default function NodeImageRegenerator({
   useEffect(() => {
     if (!node) return;
 
-    const basePrompt = TYPE_PROMPTS[deviceType] || TYPE_PROMPTS.router;
+    // Get the base prompt for the selected device type
+    const basePrompt = TYPE_PROMPTS[deviceType] || TYPE_PROMPTS.data_center;
     const nodeNamePart = `for T-Mobile network device: ${node.name}`;
     const customPart = customPrompt.trim() ? ` ${customPrompt.trim()}` : '';
-    
+
     setFullPrompt(`Create ${basePrompt} ${nodeNamePart}${customPart}`);
   }, [deviceType, customPrompt, node]);
 
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (isOpen && node) {
-      setDeviceType(node.type || 'router');
+      // Always use the node's actual type when opening the dialog
+      setDeviceType(node.type || 'data_center');
       setStyle('digital_illustration');
       setCustomPrompt('');
       setError(null);

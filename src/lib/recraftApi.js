@@ -148,21 +148,21 @@ export async function removeBackground(imageUrl) {
  * @returns {Promise<string|null>} - URL of the generated image with transparent background
  */
 export async function generateNetworkDeviceSVG(nodeName, nodeType) {
+  // Prompts for each device type in the T-Mobile network dataset
   const typePrompts = {
+    data_center: 'modern data center building with glass facade and server infrastructure, professional architectural visualization',
+    cell_tower: 'high-resolution icon of a cellular tower with antenna arrays and signal transmission equipment, professional tech style, minimalist design',
     router: 'high-resolution icon of a modern network router with clean lines, professional tech style, minimalist design',
     switch: 'high-resolution icon of a network switch with multiple ports, professional tech style, minimalist design',
+    gateway: 'high-resolution icon of a network gateway device with connectivity symbols, professional tech style, minimalist design',
     firewall: 'high-resolution icon of a security firewall with shield symbol, professional tech style, minimalist design',
-    server: 'high-resolution icon of a modern server rack, professional tech style, minimalist design',
-    endpoint: 'high-resolution icon of a computer workstation, professional tech style, minimalist design',
-    gateway: 'high-resolution icon of a network gateway device, professional tech style, minimalist design',
-    load_balancer: 'high-resolution icon of a load balancer with distribution arrows, professional tech style, minimalist design',
-    access_point: 'high-resolution icon of a wireless access point with signal waves, professional tech style, minimalist design'
   };
 
-  const basePrompt = typePrompts[nodeType] || typePrompts.router;
+  const basePrompt = typePrompts[nodeType] || typePrompts.data_center;
   const fullPrompt = `Create ${basePrompt} for T-Mobile network device: ${nodeName}`;
 
   console.log(`Generating network device image for ${nodeName} (type: ${nodeType})`);
+  console.log(`Using prompt: ${fullPrompt}`);
   console.log(`Will remove background to create transparent PNG`);
 
   // Step 1: Generate the image
