@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import dataRoutes from './routes/data.js';
 import aiRoutes from './routes/ai.js';
 import networkTopologyRoutes from './routes/network-topology.js';
+import dashboardRoutes from './routes/dashboards.js';
 import { initializeNeo4j, closeNeo4j } from './db/neo4j.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.get('/health', (req, res) => {
 app.use('/api/data', dataRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/network-topology', networkTopologyRoutes);
+app.use('/api/dashboards', dashboardRoutes);
 
 // 404 handler
 app.use((req, res) => {
@@ -70,6 +72,9 @@ async function startServer() {
 ║  • POST /api/ai/enhance-query                             ║
 ║  • GET  /api/network-topology/*                           ║
 ║  • POST /api/network-topology/*                           ║
+║  • POST /api/dashboards/generate                          ║
+║  • POST /api/dashboards/enhance-prompt                    ║
+║  • GET  /api/dashboards/suggestions                       ║
 ║                                                           ║
 ║  Databases:                                               ║
 ║  • PostgreSQL (Neon) - Security/Threat Data               ║

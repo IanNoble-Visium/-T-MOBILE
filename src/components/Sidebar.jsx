@@ -11,6 +11,7 @@ import {
   Target,
   Brain,
   Bot,
+  BarChart3,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react'
@@ -21,6 +22,7 @@ const Sidebar = ({ isOpen, onToggle }) => {
   const menuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Executive Dashboard' },
     { path: '/ai-analytics', icon: Brain, label: 'AI Analytics' },
+    { path: '/ai-dashboards', icon: BarChart3, label: 'AI Dashboards' },
     { path: '/sase', icon: Shield, label: 'SASE Platform' },
     { path: '/cyber-defense', icon: ShieldAlert, label: 'Cyber Defense Center' },
     { path: '/t-platform', icon: Network, label: 'T-Platform' },

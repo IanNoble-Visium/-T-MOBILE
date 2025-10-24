@@ -6,8 +6,14 @@ import {
   enhanceQuery,
   generateDashboardSummary 
 } from '../services/gemini.js';
+import OpenAI from 'openai';
 
 const router = express.Router();
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // Natural language query endpoint
 router.post('/query', async (req, res) => {
@@ -203,6 +209,138 @@ router.get('/suggested-queries', async (req, res) => {
     console.error('Error generating suggestions:', error);
     res.status(500).json({ 
       error: 'Failed to generate suggested queries',
+      details: error.message 
+    });
+  }
+});
+
+// Voice chat endpoint using GPT-4o
+router.post('/voice-chat', async (req, res) => {
+  try {
+    const { messages, dashboardContext = {} } = req.body;
+    
+    if (!messages || !Array.isArray(messages)) {
+      return res.status(400).json({ error: 'Messages array is required' });
+    }
+
+    console.log('Processing voice chat with OpenAI');
+    console.log('Messages received:', messages.length);
+
+    // Build context-aware system message
+    const systemMessage = {
+      role: 'system',
+      content: `You are an AI security analyst assistant for T-Mobile's TruContext Smart City platform. 
+You help users understand security data, threats, incidents, and network analytics through natural conversation.
+
+Current Dashboard Context:
+${dashboardContext.summary || 'No specific context available'}
+
+Guidelines:
+- Be conversational, friendly, and concise in your responses
+- Provide actionable insights about security threats and network health
+- When discussing data, be specific with numbers and trends
+- If you need more information, ask clarifying questions
+- Keep responses brief but informative for voice conversation
+- Use natural language suitable for spoken responses`
+    };
+
+    // Create messages array with system context
+    const chatMessages = [systemMessage, ...messages];
+
+    console.log('Calling OpenAI API...');
+
+    // Try multiple model names for compatibility
+    let completion;
+    const modelOptions = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
+    let modelUsed = null;
+
+    for (const model of modelOptions) {
+      try {
+        console.log(`Trying model: ${model}`);
+        completion = await openai.chat.completions.create({
+          model: model,
+          messages: chatMessages,
+          temperature: 0.7,
+          max_tokens: 500,
+          presence_penalty: 0.6,
+          frequency_penalty: 0.3
+        });
+        modelUsed = model;
+        console.log(`✅ Success with model: ${model}`);
+        break;
+      } catch (modelError) {
+        console.warn(`❌ Model ${model} failed:`, modelError.message);
+        if (model === modelOptions[modelOptions.length - 1]) {
+          throw modelError; // Throw error on last attempt
+        }
+      }
+    }
+
+    if (!completion) {
+      throw new Error('All model attempts failed');
+    }
+
+    const assistantMessage = completion.choices[0].message.content;
+    console.log('Response generated successfully');
+
+    res.json({
+      message: assistantMessage,
+      usage: completion.usage,
+      model: modelUsed
+    });
+
+  } catch (error) {
+    console.error('❌ Voice chat error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      status: error.status
+    });
+    
+    res.status(500).json({ 
+      error: 'Failed to process voice chat',
+      details: error.message,
+      type: error.type || 'unknown'
+    });
+  }
+});
+
+// Text-to-speech endpoint using OpenAI TTS
+router.post('/text-to-speech', async (req, res) => {
+  try {
+    const { text, voice = 'nova' } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+
+    console.log('Converting text to speech:', text.substring(0, 50) + '...');
+
+    // Call OpenAI TTS API with high-quality model
+    const mp3 = await openai.audio.speech.create({
+      model: 'tts-1-hd',
+      voice: voice, // Options: alloy, echo, fable, onyx, nova, shimmer
+      input: text,
+      speed: 1.0
+    });
+
+    // Convert response to buffer
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+
+    // Set appropriate headers for audio streaming
+    res.set({
+      'Content-Type': 'audio/mpeg',
+      'Content-Length': buffer.length,
+      'Cache-Control': 'no-cache'
+    });
+
+    res.send(buffer);
+
+  } catch (error) {
+    console.error('Text-to-speech error:', error);
+    res.status(500).json({ 
+      error: 'Failed to convert text to speech',
       details: error.message 
     });
   }

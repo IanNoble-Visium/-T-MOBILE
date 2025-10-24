@@ -30,6 +30,7 @@ import GeographicMapDashboard from './components/dashboards/GeographicMapDashboa
 import ThreatIntelligenceDashboard from './components/dashboards/ThreatIntelligenceDashboard'
 import AIAnalyticsDashboard from './components/dashboards/AIAnalyticsDashboard'
 import AIAgentDashboard from './components/dashboards/AIAgentDashboard'
+import AIDashboardsDashboard from './components/dashboards/AIDashboardsDashboard'
 
 // Protected Route Component
 const ProtectedRoute = ({ children, isAuthenticated, isLoading }) => {
@@ -103,6 +104,7 @@ function AppContent({ onLogout }) {
             <Route path="/threat-intelligence" element={<ThreatIntelligenceDashboard />} />
             <Route path="/ai-analytics" element={<AIAnalyticsDashboard />} />
             <Route path="/ai-agents" element={<AIAgentDashboard />} />
+            <Route path="/ai-dashboards" element={<AIDashboardsDashboard />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </main>
