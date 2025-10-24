@@ -691,30 +691,28 @@ const AIAnalyticsDashboard = () => {
             {/* Input Area */}
             <div className="border-t border-border p-4 bg-background/50">
               {voiceEnabled ? (
-                <div className="text-center py-8">
-                  <div className="inline-flex flex-col items-center gap-4">
-                    <div className={`relative ${isListening ? 'animate-pulse' : ''}`}>
-                      <div className={`absolute inset-0 rounded-full ${isListening ? 'bg-red-500/20 animate-ping' : ''}`} />
-                      <div className={`relative w-24 h-24 rounded-full flex items-center justify-center ${
-                        isListening ? 'bg-red-500' : isSpeaking ? 'bg-blue-500' : 'bg-primary'
-                      }`}>
-                        {isListening ? (
-                          <Mic className="w-12 h-12 text-white" />
-                        ) : isSpeaking ? (
-                          <Volume2 className="w-12 h-12 text-white animate-pulse" />
-                        ) : (
-                          <Mic className="w-12 h-12 text-white opacity-50" />
-                        )}
-                      </div>
+                <div className="flex items-center justify-center gap-4 py-4">
+                  <div className={`relative ${isListening ? 'animate-pulse' : ''}`}>
+                    <div className={`absolute inset-0 rounded-full ${isListening ? 'bg-red-500/20 animate-ping' : ''}`} />
+                    <div className={`relative w-16 h-16 rounded-full flex items-center justify-center ${
+                      isListening ? 'bg-red-500' : isSpeaking ? 'bg-blue-500' : 'bg-primary'
+                    }`}>
+                      {isListening ? (
+                        <Mic className="w-8 h-8 text-white" />
+                      ) : isSpeaking ? (
+                        <Volume2 className="w-8 h-8 text-white animate-pulse" />
+                      ) : (
+                        <Mic className="w-8 h-8 text-white opacity-50" />
+                      )}
                     </div>
-                    <div className="text-center">
-                      <p className="text-lg font-semibold">
-                        {isListening ? 'Listening...' : isSpeaking ? 'Speaking...' : isLoading ? 'Thinking...' : 'Speak now'}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {isListening ? 'Say your question' : isSpeaking ? 'AI is responding' : isLoading ? 'Processing your request' : 'Voice mode active'}
-                      </p>
-                    </div>
+                  </div>
+                  <div>
+                    <p className="text-base font-semibold">
+                      {isListening ? 'Listening...' : isSpeaking ? 'Speaking...' : isLoading ? 'Thinking...' : 'Speak now'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isListening ? 'Say your question' : isSpeaking ? 'AI is responding' : isLoading ? 'Processing your request' : 'Voice mode active'}
+                    </p>
                   </div>
                 </div>
               ) : (

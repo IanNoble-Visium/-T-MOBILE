@@ -7,6 +7,7 @@ import {
   generateDashboardSummary 
 } from '../services/gemini.js';
 import OpenAI from 'openai';
+import { executeQuery as neo4jQuery } from '../db/neo4j.js';
 
 const router = express.Router();
 
@@ -226,22 +227,92 @@ router.post('/voice-chat', async (req, res) => {
     console.log('Processing voice chat with OpenAI');
     console.log('Messages received:', messages.length);
 
+    // Fetch fresh data for context from both databases
+    let dataContext = '';
+    try {
+      // PostgreSQL queries
+      const [threatsResult, incidentsResult, devicesResult] = await Promise.all([
+        query(`SELECT COUNT(*) as total, severity, COUNT(CASE WHEN timestamp > NOW() - INTERVAL '24 hours' THEN 1 END) as last_24h FROM threat_events GROUP BY severity`),
+        query(`SELECT status, COUNT(*) as count FROM incidents GROUP BY status`),
+        query('SELECT COUNT(*) as total FROM devices')
+      ]);
+
+      const threatStats = threatsResult.rows;
+      const incidentStats = incidentsResult.rows;
+      const deviceCount = devicesResult.rows[0]?.total || 0;
+
+      // Neo4j Cypher queries for network topology
+      let neo4jData = {};
+      try {
+        const [nodeStats, edgeStats, nodeTypes, criticalNodes] = await Promise.all([
+          // Get total nodes
+          neo4jQuery('MATCH (n) RETURN count(n) as total'),
+          // Get total relationships/edges
+          neo4jQuery('MATCH ()-[r]->() RETURN count(r) as total'),
+          // Get node counts by label/type
+          neo4jQuery('MATCH (n) RETURN labels(n)[0] as type, count(n) as count ORDER BY count DESC'),
+          // Get nodes with high connectivity (potential critical infrastructure) - using modern COUNT {} syntax
+          neo4jQuery('MATCH (n) RETURN n.name as name, labels(n)[0] as type, COUNT { (n)--() } as connections ORDER BY connections DESC LIMIT 5')
+        ]);
+
+        neo4jData = {
+          totalNodes: nodeStats[0]?.total?.toNumber ? nodeStats[0].total.toNumber() : nodeStats[0]?.total || 0,
+          totalEdges: edgeStats[0]?.total?.toNumber ? edgeStats[0].total.toNumber() : edgeStats[0]?.total || 0,
+          nodeTypes: nodeTypes.map(t => ({
+            type: t.type,
+            count: t.count?.toNumber ? t.count.toNumber() : t.count
+          })),
+          criticalNodes: criticalNodes.map(n => ({
+            name: n.name,
+            type: n.type,
+            connections: n.connections?.toNumber ? n.connections.toNumber() : n.connections
+          }))
+        };
+
+        console.log('Neo4j data fetched:', neo4jData);
+      } catch (neo4jError) {
+        console.error('Error fetching Neo4j data:', neo4jError);
+        neo4jData = { error: 'Neo4j data unavailable' };
+      }
+
+      dataContext = `
+Real-time Data from Multiple Sources:
+
+PostgreSQL (Security & Threat Data):
+- Total Devices Monitored: ${deviceCount}
+- Threat Statistics by Severity: ${JSON.stringify(threatStats)}
+- Incident Statistics by Status: ${JSON.stringify(incidentStats)}
+
+Neo4j (Network Topology Data):
+- Total Network Nodes: ${neo4jData.totalNodes || 'N/A'}
+- Total Network Connections: ${neo4jData.totalEdges || 'N/A'}
+- Node Types Distribution: ${JSON.stringify(neo4jData.nodeTypes || [])}
+- Critical Infrastructure Nodes: ${JSON.stringify(neo4jData.criticalNodes || [])}
+
+${dashboardContext?.summary ? `\nDashboard Summary: ${dashboardContext.summary}` : ''}`;
+
+    } catch (dbError) {
+      console.error('Error fetching context data:', dbError);
+      dataContext = dashboardContext?.summary || 'Limited context available';
+    }
+
     // Build context-aware system message
     const systemMessage = {
       role: 'system',
       content: `You are an AI security analyst assistant for T-Mobile's TruContext Smart City platform. 
 You help users understand security data, threats, incidents, and network analytics through natural conversation.
 
-Current Dashboard Context:
-${dashboardContext.summary || 'No specific context available'}
+Current Dashboard Data:
+${dataContext}
 
 Guidelines:
 - Be conversational, friendly, and concise in your responses
-- Provide actionable insights about security threats and network health
-- When discussing data, be specific with numbers and trends
-- If you need more information, ask clarifying questions
-- Keep responses brief but informative for voice conversation
-- Use natural language suitable for spoken responses`
+- Provide actionable insights about security threats and network health based on the actual data above
+- When discussing data, be specific with the numbers provided
+- If you need more information than what's available, acknowledge it and provide guidance on what can be checked
+- Keep responses brief but informative for voice conversation (2-3 sentences max)
+- Use natural language suitable for spoken responses
+- Reference the actual statistics when answering questions about threats, incidents, or devices`
     };
 
     // Create messages array with system context
