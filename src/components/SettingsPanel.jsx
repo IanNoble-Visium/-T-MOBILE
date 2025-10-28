@@ -29,7 +29,8 @@ const SettingsPanel = ({ isOpen, onClose }) => {
   useEffect(() => {
     const checkConnection = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/network-topology/nodes', {
+        const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+        const response = await fetch(`${API_BASE_URL}/network-topology/nodes`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         })
@@ -210,4 +211,3 @@ const SettingsPanel = ({ isOpen, onClose }) => {
 }
 
 export default SettingsPanel
-

@@ -18,7 +18,7 @@ import CreateDashboardModal from '@/components/dashboards/CreateDashboardModal';
 import ChartComponent from '@/components/dashboards/ChartComponent';
 import SaveDashboardModal from '@/components/dashboards/SaveDashboardModal';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const AIDashboardsDashboard = () => {
   const [charts, setCharts] = useState([]);
@@ -289,4 +289,3 @@ const AIDashboardsDashboard = () => {
 };
 
 export default AIDashboardsDashboard;
-

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { X, Sparkles, Loader2 } from 'lucide-react';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const CreateDashboardModal = ({ onClose, onCreate, isLoading }) => {
   const [prompt, setPrompt] = useState('');
@@ -152,4 +152,3 @@ const CreateDashboardModal = ({ onClose, onCreate, isLoading }) => {
 };
 
 export default CreateDashboardModal;
-
