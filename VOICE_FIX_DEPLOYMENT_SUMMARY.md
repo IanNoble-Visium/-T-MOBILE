@@ -87,6 +87,7 @@ Ensure `OPENAI_API_KEY` is set in Vercel:
 # Add all new and modified files
 git add api/ai/speech-to-text.js
 git add api/ai/text-to-speech.js
+git add api/ai/voice-chat.js
 git add src/hooks/useSpeechRecognition.js
 git add src/components/dashboards/AIAnalyticsDashboard.jsx
 git add VOICE_FEATURE_FIX_GUIDE.md
@@ -97,6 +98,7 @@ git commit -m "Fix: Replace browser Web Speech API with OpenAI Whisper for relia
 
 - Add speech-to-text serverless endpoint using OpenAI Whisper API
 - Add text-to-speech serverless endpoint using OpenAI TTS-1-HD
+- Add voice-chat serverless endpoint using GPT-4o
 - Create custom useSpeechRecognition hook with MediaRecorder
 - Update AIAnalyticsDashboard to use new speech recognition
 - Remove dependency on unreliable browser Web Speech API
