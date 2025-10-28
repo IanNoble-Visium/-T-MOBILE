@@ -19,6 +19,7 @@ import {
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 import { useNetworkAIContext } from '@/components/NetworkAIContext';
+import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -34,39 +35,35 @@ const AIAnalyticsDashboard = () => {
 
   // Voice conversation states
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [transcript, setTranscript] = useState('');
-  const [voiceSupported, setVoiceSupported] = useState(false);
   const [micPermission, setMicPermission] = useState('unknown'); // 'granted', 'denied', 'prompt', 'unknown'
   const [micError, setMicError] = useState(null);
-  const recognitionRef = useRef(null);
   const audioRef = useRef(null);
   const voiceMessagesRef = useRef([]);
+
+  // Use custom speech recognition hook (replaces browser Web Speech API)
+  const {
+    isListening,
+    transcript,
+    error: speechError,
+    isProcessing: speechProcessing,
+    startListening: startSpeechRecognition,
+    stopListening: stopSpeechRecognition,
+    reset: resetSpeechRecognition
+  } = useSpeechRecognition();
 
   // Get network AI context
   const { context: networkAIContext, suggestedQueries: networkQueries, contextString } = useNetworkAIContext();
 
-  // Check for voice support and microphone permissions on mount
+  // Check for microphone permissions on mount
   useEffect(() => {
-    const initVoiceSupport = async () => {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      
-      if (!SpeechRecognition) {
-        console.warn('Speech Recognition not supported in this browser');
-        setVoiceSupported(false);
-        return;
-      }
-
-      setVoiceSupported(true);
-      
-      // Check microphone permissions
+    const checkMicPermission = async () => {
       try {
         if (navigator.permissions) {
           const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
           setMicPermission(permissionStatus.state);
           console.log('Microphone permission:', permissionStatus.state);
-          
+
           permissionStatus.onchange = () => {
             setMicPermission(permissionStatus.state);
             console.log('Microphone permission changed to:', permissionStatus.state);
@@ -75,116 +72,40 @@ const AIAnalyticsDashboard = () => {
       } catch (error) {
         console.warn('Could not query microphone permission:', error);
       }
-
-      // Initialize Speech Recognition
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      recognitionRef.current.lang = 'en-US';
-
-      recognitionRef.current.onstart = () => {
-        console.log('🎤 Speech recognition started');
-        setMicError(null);
-      };
-
-      recognitionRef.current.onresult = (event) => {
-        const current = event.resultIndex;
-        const transcriptText = event.results[current][0].transcript;
-        console.log('📝 Transcript:', transcriptText, 'Final:', event.results[current].isFinal);
-        setTranscript(transcriptText);
-        
-        if (event.results[current].isFinal) {
-          console.log('✅ Final transcript:', transcriptText);
-          handleVoiceInput(transcriptText);
-        }
-      };
-
-      recognitionRef.current.onerror = (event) => {
-        console.error('❌ Speech recognition error:', event.error, event);
-        setIsListening(false);
-        
-        let errorMessage = '';
-        switch (event.error) {
-          case 'not-allowed':
-          case 'service-not-allowed':
-            errorMessage = 'Microphone access denied. Please allow microphone permissions.';
-            setMicPermission('denied');
-            break;
-          case 'no-speech':
-            errorMessage = 'No speech detected. Please speak louder or check your microphone.';
-            // Restart listening if no speech detected
-            if (voiceEnabled) {
-              setTimeout(() => startListening(), 500);
-            }
-            break;
-          case 'audio-capture':
-            errorMessage = 'No microphone found. Please connect a microphone.';
-            break;
-          case 'network':
-            errorMessage = 'Network error occurred during speech recognition.';
-            break;
-          case 'aborted':
-            errorMessage = 'Speech recognition was aborted.';
-            break;
-          default:
-            errorMessage = `Speech recognition error: ${event.error}`;
-        }
-        
-        if (errorMessage && event.error !== 'no-speech') {
-          setMicError(errorMessage);
-          console.error('Error details:', errorMessage);
-        }
-      };
-
-      recognitionRef.current.onend = () => {
-        console.log('🛑 Speech recognition ended');
-        setIsListening(false);
-        // Auto-restart if voice mode is still enabled
-        if (voiceEnabled && !isLoading && !micError) {
-          setTimeout(() => startListening(), 500);
-        }
-      };
-
-      recognitionRef.current.onaudiostart = () => {
-        console.log('🔊 Audio capture started - microphone is active');
-      };
-
-      recognitionRef.current.onaudioend = () => {
-        console.log('🔇 Audio capture ended');
-      };
-
-      recognitionRef.current.onsoundstart = () => {
-        console.log('🎵 Sound detected');
-      };
-
-      recognitionRef.current.onsoundend = () => {
-        console.log('🔕 Sound ended');
-      };
-
-      recognitionRef.current.onspeechstart = () => {
-        console.log('🗣️ Speech detected');
-      };
-
-      recognitionRef.current.onspeechend = () => {
-        console.log('🤐 Speech ended');
-      };
     };
 
-    initVoiceSupport();
-
-    return () => {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-    };
+    checkMicPermission();
   }, []);
+
+  // Handle transcript changes from speech recognition
+  useEffect(() => {
+    if (transcript && !speechProcessing) {
+      console.log('✅ Final transcript:', transcript);
+      handleVoiceInput(transcript);
+      resetSpeechRecognition(); // Clear for next input
+    }
+  }, [transcript, speechProcessing]);
+
+  // Handle speech recognition errors
+  useEffect(() => {
+    if (speechError) {
+      setMicError(speechError);
+      console.error('Speech recognition error:', speechError);
+    }
+  }, [speechError]);
 
   // Handle voice enabled changes
   useEffect(() => {
     if (voiceEnabled && !isLoading) {
       console.log('Voice mode enabled - starting listening');
+      if (!isListening) {
+        startListening();
+      }
     } else if (!voiceEnabled) {
       console.log('Voice mode disabled - stopping listening');
+      if (isListening) {
+        stopListening();
+      }
     }
   }, [voiceEnabled, isLoading]);
 
@@ -335,26 +256,15 @@ const AIAnalyticsDashboard = () => {
   };
 
   const startListening = () => {
-    if (recognitionRef.current && !isListening && !isLoading) {
-      setTranscript('');
-      setIsListening(true);
+    if (!isListening && !isLoading) {
       setMicError(null);
-      try {
-        console.log('🎤 Starting speech recognition...');
-        recognitionRef.current.start();
-      } catch (error) {
-        console.error('❌ Failed to start recognition:', error);
-        setIsListening(false);
-        setMicError(`Failed to start: ${error.message}`);
-      }
+      startSpeechRecognition();
     }
   };
 
   const stopListening = () => {
-    if (recognitionRef.current && isListening) {
-      recognitionRef.current.stop();
-      setIsListening(false);
-      setTranscript('');
+    if (isListening) {
+      stopSpeechRecognition();
     }
   };
 
@@ -548,8 +458,7 @@ const AIAnalyticsDashboard = () => {
           </div>
           
           {/* Voice Mode Toggle */}
-          {voiceSupported && (
-            <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-end gap-2">
               <button
                 onClick={toggleVoiceMode}
                 className={`relative px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
@@ -597,7 +506,6 @@ const AIAnalyticsDashboard = () => {
                 </div>
               )}
             </div>
-          )}
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
           <Sparkles className="w-full h-full" />
