@@ -98,8 +98,8 @@ User Browser
 **Optional (for image generation):**
 | Variable | Value |
 |----------|-------|
-| `VITE_CLOUDINARY_CLOUD_NAME` | `dod8ajzjd` |
-| `VITE_CLOUDINARY_API_KEY` | `841983555962286` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | `your_cloudinary_cloud_name` |
+| `VITE_CLOUDINARY_API_KEY` | `your_cloudinary_api_key` |
 | `VITE_CLOUDINARY_API_SECRET` | Your secret |
 | `VITE_RECRAFT_API_URL` | `https://external.api.recraft.ai/v1` |
 | `VITE_RECRAFT_API_KEY` | Your key |

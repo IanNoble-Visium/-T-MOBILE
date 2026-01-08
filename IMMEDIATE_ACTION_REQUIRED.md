@@ -2,7 +2,7 @@
 
 ## Critical Security Issue: Exposed Database Credentials
 
-Your Neo4j database password has been exposed in the GitHub repository and detected by GitGuardian.
+Your Neo4j database password was exposed in the GitHub repository and detected by GitGuardian.
 
 ---
 
@@ -57,8 +57,12 @@ The exposed password is still in git history. You need to remove it:
 # Install git-filter-repo
 pip install git-filter-repo
 
+# Create a redaction map file locally (DO NOT COMMIT THIS FILE)
+# Paste the leaked credential value from the GitGuardian alert on the left.
+echo "<LEAKED_VALUE_FROM_GITGUARDIAN>==>[REDACTED]" > redactions.txt
+
 # Remove the exposed password from history
-git filter-repo --replace-text <(echo 'S0RAn2Qq41Sf9il2n_SrIKrAoH6ozYGIGzoSZsrQzOA==>[REDACTED]')
+git filter-repo --replace-text redactions.txt
 
 # Force push to GitHub
 git push --force-with-lease origin main
@@ -121,8 +125,8 @@ This will prevent accidental commits of credentials.
 After completing all steps, verify:
 
 ```bash
-# Check that password is removed from history
-git log -p --all | grep "S0RAn2Qq41Sf9il2n_SrIKrAoH6ozYGIGzoSZsrQzOA"
+# Check that the leaked credential (from GitGuardian) is removed from history
+git log -p --all | grep "<LEAKED_VALUE_FROM_GITGUARDIAN>"
 # Should return: (nothing)
 
 # Check that .env is not in git

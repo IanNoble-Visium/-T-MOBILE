@@ -215,7 +215,7 @@ Then use `debugLog()` instead of `console.log()` for detailed output.
 2. Filter by "XHR" or "Fetch"
 3. Look for requests to:
    - `https://external.api.recraft.ai/v1/images/generations`
-   - `https://api.cloudinary.com/v1_1/dod8ajzjd/image/upload`
+   - `https://api.cloudinary.com/v1_1/<cloud_name>/image/upload`
 4. Check response status and body
 
 ### Check Cloudinary Dashboard

@@ -4,6 +4,22 @@
 
 Comprehensive logging has been added to the AI Dashboards feature to provide complete visibility into Neo4j and PostgreSQL query execution, chart type selection, and data transformation.
 
+## Logging Coverage (Diagram)
+
+```mermaid
+flowchart LR
+  UI[AI Dashboards UI] --> API[POST /api/dashboards/generate]
+  API -->|writes| LOGS[(Server Console Logs)]
+  API --> Sel[Chart selection]
+  Sel -->|logs| LOGS
+  API --> N4J[Neo4j queries]
+  N4J -->|logs| LOGS
+  API --> PG[PostgreSQL queries]
+  PG -->|logs| LOGS
+  API --> Xform[Data transformation]
+  Xform -->|logs| LOGS
+```
+
 **Status**: ✅ COMPLETE AND VERIFIED
 
 ## 📚 Documentation Files

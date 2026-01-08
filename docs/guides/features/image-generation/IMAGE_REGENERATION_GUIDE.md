@@ -196,7 +196,7 @@ export function isCloudinaryConfigured() {
 After following these steps:
 
 ✅ All 50 node images successfully uploaded to Cloudinary
-✅ Images accessible at: `https://res.cloudinary.com/dod8ajzjd/image/upload/f_auto/tmobile/network-nodes/node-XXX_name`
+✅ Images accessible at: `https://res.cloudinary.com/<cloud_name>/image/upload/f_auto/tmobile/network-nodes/node-XXX_name`
 ✅ Node icons display correctly in network topology
 ✅ No 404 errors in console
 ✅ Images cached in localStorage for fast loading

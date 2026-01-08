@@ -16,7 +16,8 @@ The Cloudinary URLs were missing the **format specification**. URLs were being c
 
 ```
 ❌ WRONG:
-https://res.cloudinary.com/dod8ajzjd/image/upload/tmobile/network-nodes/node-041_dallas_data_center
+https://res.cloudinary.com/<cloud_name>/image/upload/tmobile/network-nodes/node-041_dallas_data_center
+
 ```
 
 Cloudinary requires a format specification in the URL. Without it, the image cannot be delivered.
@@ -29,13 +30,13 @@ Added `f_auto` (format auto) transformation to all Cloudinary URLs. This tells C
 
 ```
 ✅ CORRECT:
-https://res.cloudinary.com/dod8ajzjd/image/upload/f_auto/tmobile/network-nodes/node-041_dallas_data_center
+https://res.cloudinary.com/<cloud_name>/image/upload/f_auto/tmobile/network-nodes/node-041_dallas_data_center
 ```
 
 With optimizations:
 ```
 ✅ OPTIMIZED:
-https://res.cloudinary.com/dod8ajzjd/image/upload/w_64,h_64,c_fill,q_auto,f_auto/tmobile/network-nodes/node-041_dallas_data_center
+https://res.cloudinary.com/<cloud_name>/image/upload/w_64,h_64,c_fill,q_auto,f_auto/tmobile/network-nodes/node-041_dallas_data_center
 ```
 
 ## Code Changes
@@ -113,7 +114,7 @@ export function getOptimizedNodeImageUrl(publicId, size = 64) {
 
 ### URL Construction Flow
 
-1. **Base URL**: `https://res.cloudinary.com/dod8ajzjd/image/upload`
+1. **Base URL**: `https://res.cloudinary.com/<cloud_name>/image/upload`
 
 2. **Add transformations** (if any):
    - `w_64` - width 64px
@@ -129,7 +130,7 @@ export function getOptimizedNodeImageUrl(publicId, size = 64) {
 
 ### Final URL
 ```
-https://res.cloudinary.com/dod8ajzjd/image/upload/w_64,h_64,c_fill,q_auto,f_auto/tmobile/network-nodes/node-041_dallas_data_center
+https://res.cloudinary.com/<cloud_name>/image/upload/w_64,h_64,c_fill,q_auto,f_auto/tmobile/network-nodes/node-041_dallas_data_center
 ```
 
 ## What `f_auto` Does

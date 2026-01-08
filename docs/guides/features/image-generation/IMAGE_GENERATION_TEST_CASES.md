@@ -24,7 +24,7 @@
 - Console shows: "Calling Recraft API with prompt: Create high-resolution SVG icon..."
 - Network tab shows POST request to `external.api.recraft.ai/v1/images/generations`
 - Console shows: "Generated image URL for East Coast Gateway: https://..."
-- Network tab shows POST request to `api.cloudinary.com/v1_1/dod8ajzjd/image/upload`
+- Network tab shows POST request to `api.cloudinary.com/v1_1/<cloud_name>/image/upload`
 - Console shows: "Successfully uploaded image to Cloudinary: tmobile/network-nodes/node-047_east_coast_gateway"
 - Visualization shows custom SVG image instead of colored circle
 

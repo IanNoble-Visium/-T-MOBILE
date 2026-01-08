@@ -114,8 +114,8 @@ For **EACH** variable below:
 
 | Key | Value |
 |-----|-------|
-| `VITE_CLOUDINARY_CLOUD_NAME` | `dod8ajzjd` |
-| `VITE_CLOUDINARY_API_KEY` | `841983555962286` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | `your_cloudinary_cloud_name` |
+| `VITE_CLOUDINARY_API_KEY` | `your_cloudinary_api_key` |
 | `VITE_CLOUDINARY_API_SECRET` | Your Cloudinary secret |
 | `VITE_RECRAFT_API_URL` | `https://external.api.recraft.ai/v1` |
 | `VITE_RECRAFT_API_KEY` | Your Recraft API key |

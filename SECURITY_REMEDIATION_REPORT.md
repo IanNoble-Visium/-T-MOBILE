@@ -4,7 +4,7 @@
 
 **CRITICAL SECURITY ISSUE DETECTED AND PARTIALLY REMEDIATED**
 
-GitGuardian detected exposed credentials in the GitHub repository `IanNoble-Visium/-T-MOBILE`. The Neo4j database password was committed to git history in markdown documentation files.
+GitGuardian detected exposed credentials in the GitHub repository `IanNoble-Visium/-T-MOBILE`. A Neo4j database password was committed to git history in markdown documentation files.
 
 **Status:** ⚠️ PARTIALLY REMEDIATED - Credentials removed from working files, but git history still contains exposed credentials.
 
@@ -14,7 +14,7 @@ GitGuardian detected exposed credentials in the GitHub repository `IanNoble-Visi
 
 ### 1. ✅ Neo4j Password (CRITICAL)
 - **Exposed in:** `NEO4J_IMPLEMENTATION_COMPLETE.md`, `NEO4J_INTEGRATION_PLAN.md`
-- **Credential:** `S0RAn2Qq41Sf9il2n_SrIKrAoH6ozYGIGzoSZsrQzOA`
+- **Credential:** `[REDACTED - see GitGuardian incident for the exact leaked value]`
 - **Status:** ✅ REDACTED from working files
 - **Git History:** ⚠️ STILL PRESENT - Requires force push to remove
 
@@ -54,7 +54,7 @@ GitGuardian detected exposed credentials in the GitHub repository `IanNoble-Visi
 
 **Steps:**
 1. Log in to Neo4j Aura console: https://console.neo4j.io
-2. Navigate to your instance: `TMOBILE` (a52f4a1a)
+2. Navigate to your Neo4j Aura instance
 3. Go to "Security" → "Credentials"
 4. Generate a new password
 5. Copy the new password
@@ -62,7 +62,7 @@ GitGuardian detected exposed credentials in the GitHub repository `IanNoble-Visi
 
 **New Credentials Format:**
 ```
-NEO4J_URI=neo4j+s://a52f4a1a.databases.neo4j.io
+NEO4J_URI=neo4j+s://<your-instance-id>.databases.neo4j.io
 NEO4J_USERNAME=neo4j
 NEO4J_PASSWORD=<NEW_PASSWORD_HERE>
 NEO4J_DATABASE=neo4j
@@ -76,8 +76,12 @@ NEO4J_DATABASE=neo4j
 # Install git-filter-repo if not already installed
 pip install git-filter-repo
 
+# Create a redaction map file locally (DO NOT COMMIT THIS FILE)
+# Paste the leaked credential value from the GitGuardian alert on the left.
+echo "<LEAKED_VALUE_FROM_GITGUARDIAN>==>[REDACTED]" > redactions.txt
+
 # Remove the exposed password from all history
-git filter-repo --replace-text <(echo 'S0RAn2Qq41Sf9il2n_SrIKrAoH6ozYGIGzoSZsrQzOA==>[REDACTED]')
+git filter-repo --replace-text redactions.txt
 
 # Force push to remote (WARNING: This rewrites history)
 git push --force-with-lease origin main

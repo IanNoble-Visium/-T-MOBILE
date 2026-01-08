@@ -29,6 +29,15 @@
                     ❌ API CALLS FAIL ❌
 ```
 
+### Current Deployment (Diagram)
+
+```mermaid
+flowchart TD
+  U[User Browser] -->|Loads UI| V[Vercel\n(Frontend Only)]
+  U -->|GET /api/...| V
+  V -->|No backend server\nNo API routes| F[API calls fail\nERR_BLOCKED_BY_CLIENT / Failed to fetch]
+```
+
 ---
 
 ## ✅ CORRECT ARCHITECTURE (After Fix)
@@ -71,11 +80,35 @@
                    └──────────┘      └──────────┘      └──────────┘
 ```
 
+### Correct Deployment (Diagram)
+
+```mermaid
+flowchart TD
+  U[User Browser] -->|Loads UI| FE[Vercel\nReact/Vite]
+  U -->|API calls| BE[Render\nExpress API]
+  FE -->|VITE_API_BASE_URL| BE
+  BE --> PG[(Neon PostgreSQL)]
+  BE --> N4J[(Neo4j Aura)]
+  BE --> AI[AI Providers\n(Gemini / OpenAI)]
+```
+
 ---
 
 ## 📊 DATA FLOW DIAGRAM
 
 ### Example: Loading Network Topology
+
+```mermaid
+sequenceDiagram
+  participant B as Browser (Vercel UI)
+  participant API as Render API (Express)
+  participant N4J as Neo4j Aura
+  B->>API: GET /api/network-topology/nodes
+  API->>N4J: Cypher query (MATCH ...)
+  N4J-->>API: nodes + edges
+  API-->>B: JSON {success,data,count}
+  B->>B: Render topology
+```
 
 ```
 1. USER OPENS NETWORK TOPOLOGY PAGE
@@ -184,8 +217,8 @@
 │                                                              │
 │  VITE_API_BASE_URL=https://your-backend.onrender.com/api   │
 │  VITE_API_URL=https://your-backend.onrender.com/api        │
-│  VITE_CLOUDINARY_CLOUD_NAME=dod8ajzjd                      │
-│  VITE_CLOUDINARY_API_KEY=841983555962286                   │
+│  VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name      │
+│  VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key            │
 │  VITE_CLOUDINARY_API_SECRET=...                            │
 │  VITE_RECRAFT_API_URL=https://external.api.recraft.ai/v1   │
 │  VITE_RECRAFT_API_KEY=...                                  │

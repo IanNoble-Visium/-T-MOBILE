@@ -20,15 +20,46 @@ The frontend makes API calls to:
 
 These endpoints are defined in your Express server, which is not running on Vercel.
 
+### Architecture (Diagram)
+
+```mermaid
+flowchart TD
+  U[User Browser] -->|Loads UI| FE[Vercel\n(Frontend)]
+  U -->|Calls /api/...| FE
+  FE -->|No Express server deployed| X[API calls fail\nFailed to fetch]
+```
+
 ---
 
 ## 🎯 RECOMMENDED SOLUTION
 
 **Deploy the backend separately to Render.com (free tier) and configure Vercel to point to it.**
 
+```mermaid
+flowchart TD
+  U[User Browser] -->|Loads UI| FE[Vercel\n(Frontend)]
+  U -->|API calls| BE[Render\n(Express Backend)]
+  FE -->|VITE_API_BASE_URL| BE
+  BE --> PG[(Neon PostgreSQL)]
+  BE --> N4J[(Neo4j Aura)]
+  BE --> AI[AI Providers\n(Gemini / OpenAI)]
+```
+
 ---
 
 ## 📋 COMPLETE DEPLOYMENT STEPS
+
+### Deployment Steps (Diagram)
+
+```mermaid
+flowchart TD
+  A[GitHub Repository] --> B[Deploy Backend to Render]
+  B --> C[Set Backend Env Vars\n(POSTGRES_URL, NEO4J_*, AI keys)]
+  C --> D[Get Render Backend URL]
+  D --> E[Set Vercel Env Vars\n(VITE_API_BASE_URL, VITE_API_URL)]
+  E --> F[Redeploy Vercel]
+  F --> G[Browser loads UI from Vercel\nAPI calls hit Render]
+```
 
 ### STEP 1: Deploy Backend to Render.com
 
@@ -98,9 +129,9 @@ VITE_API_BASE_URL=https://tmobile-backend.onrender.com/api
 VITE_API_URL=https://tmobile-backend.onrender.com/api
 
 # Cloudinary (for image uploads)
-VITE_CLOUDINARY_CLOUD_NAME=dod8ajzjd
-VITE_CLOUDINARY_API_KEY=841983555962286
-VITE_CLOUDINARY_API_SECRET=W1gSyjhw17u1vT5UQObDrDMmrl0
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key
+VITE_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 
 # Recraft AI (for image generation)
 VITE_RECRAFT_API_URL=https://external.api.recraft.ai/v1
@@ -140,8 +171,8 @@ VITE_RECRAFT_API_KEY=your_recraft_api_key_here
 |----------|----------|-------------|---------|
 | `VITE_API_BASE_URL` | Yes | Backend API base URL | `https://your-backend.onrender.com/api` |
 | `VITE_API_URL` | Yes | Backend API URL (same as above) | `https://your-backend.onrender.com/api` |
-| `VITE_CLOUDINARY_CLOUD_NAME` | Optional | Cloudinary cloud name | `dod8ajzjd` |
-| `VITE_CLOUDINARY_API_KEY` | Optional | Cloudinary API key | `841983555962286` |
+| `VITE_CLOUDINARY_CLOUD_NAME` | Optional | Cloudinary cloud name | `your_cloudinary_cloud_name` |
+| `VITE_CLOUDINARY_API_KEY` | Optional | Cloudinary API key | `your_cloudinary_api_key` |
 | `VITE_CLOUDINARY_API_SECRET` | Optional | Cloudinary API secret | Your secret |
 | `VITE_RECRAFT_API_URL` | Optional | Recraft API URL | `https://external.api.recraft.ai/v1` |
 | `VITE_RECRAFT_API_KEY` | Optional | Recraft API key | Your key |

@@ -3,6 +3,30 @@
 ## Overview
 The dashboard generation API now uses real data from Neo4j and PostgreSQL databases with intelligent chart type selection.
 
+## Dashboard Generation Flow (Diagram)
+
+```mermaid
+sequenceDiagram
+  participant UI as UI (Client)
+  participant API as POST /api/dashboards/generate
+  participant Sel as Chart Selector
+  participant N4J as Neo4j
+  participant PG as PostgreSQL
+
+  UI->>API: { prompt }
+  API->>Sel: Analyze prompt + context
+  Sel-->>API: Chart plan (types + data sources)
+  alt Needs topology data
+    API->>N4J: Query nodes + edges
+    N4J-->>API: Topology result
+  end
+  alt Needs metrics data
+    API->>PG: Query KPI/metrics
+    PG-->>API: Metrics result
+  end
+  API-->>UI: Dashboard JSON (charts[])
+```
+
 ## Endpoint
 
 ### POST /api/dashboards/generate

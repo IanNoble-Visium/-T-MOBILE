@@ -55,7 +55,7 @@ const signatureString = `public_id=${publicId}&timestamp=${timestamp}${CLOUDINAR
 
 2. **Append API secret directly (no separator):**
    ```
-   public_id=tmobile/network-nodes/node-002_new_york_cell_tower_1&timestamp=1760928614W1gSyjhw17u1vT5UQObDrDMmrl0
+   public_id=tmobile/network-nodes/node-002_new_york_cell_tower_1&timestamp=1760928614<CLOUDINARY_API_SECRET>
    ```
 
 3. **Hash with SHA1:**

@@ -4,6 +4,34 @@
 
 The AI Analytics Dashboard now features asynchronous voice conversation powered by OpenAI's GPT-4o and TTS-1-HD models. This creates a natural, human-like conversation experience for your demo.
 
+## Voice Conversation Flow (Diagram)
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant UI as Browser UI (AI Analytics)
+  participant STT as Web Speech API (STT)
+  participant VC as Backend API\nPOST /api/ai/voice-chat
+  participant LLM as OpenAI GPT-4o
+  participant TTS as Backend API\nPOST /api/ai/text-to-speech
+  participant Audio as Browser Audio Output
+
+  U->>UI: Toggle Voice ON
+  UI->>STT: startListening()
+  U->>STT: Speak
+  STT-->>UI: Transcript
+  UI->>VC: Send transcript + history
+  VC->>LLM: Generate response text
+  LLM-->>VC: Response text
+  VC-->>UI: Response text
+  UI->>TTS: Request audio (text)
+  TTS->>LLM: Generate speech (TTS)
+  LLM-->>TTS: Audio
+  TTS-->>UI: Audio
+  UI->>Audio: Play
+  UI->>STT: Resume listening
+```
+
 ## How to Use
 
 ### 1. **Enable Voice Mode**

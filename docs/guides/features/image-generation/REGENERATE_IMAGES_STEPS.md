@@ -105,9 +105,9 @@ To confirm images were uploaded:
 ### Issue: "Cloudinary not fully configured" error
 **Solution:**
 1. Check `.env` file has these variables:
-   - `VITE_CLOUDINARY_CLOUD_NAME=dod8ajzjd`
-   - `VITE_CLOUDINARY_API_KEY=841983555962286`
-   - `VITE_CLOUDINARY_API_SECRET=W1gSyjhw17u1vT5UQObDrDMmrl0`
+	   - `VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name`
+	   - `VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key`
+	   - `VITE_CLOUDINARY_API_SECRET=your_cloudinary_api_secret`
 2. Restart development server
 3. Try again
 
@@ -161,7 +161,7 @@ const result = await generateSVGImage(fullPrompt, {
 ## Expected Results After Regeneration
 
 ✅ All 50 node images successfully uploaded to Cloudinary
-✅ Images accessible at: `https://res.cloudinary.com/dod8ajzjd/image/upload/f_auto/tmobile/network-nodes/node-XXX_name`
+✅ Images accessible at: `https://res.cloudinary.com/<cloud_name>/image/upload/f_auto/tmobile/network-nodes/node-XXX_name`
 ✅ Node icons display correctly in network topology
 ✅ No 404 errors in console
 ✅ Images have transparent backgrounds (look professional on any background)

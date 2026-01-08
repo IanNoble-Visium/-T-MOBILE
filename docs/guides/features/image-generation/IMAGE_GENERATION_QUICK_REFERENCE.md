@@ -27,6 +27,36 @@ The Network Topology screen was showing 404 errors for node images. The system n
 3. Display images in visualization
 ```
 
+### Auto-Generation Logic (Diagram)
+
+```mermaid
+flowchart TD
+  A[Visualization loads] --> B{Node image in cache?}
+  B -- Yes --> Z[Render node with cached image URL]
+  B -- No --> C{Image exists in Cloudinary?}
+  C -- Yes --> D[Use Cloudinary URL]
+  D --> E[Cache URL]
+  E --> Z
+  C -- No --> F{Auto-generate limit\n(< 5 per load)?}
+  F -- No --> G[Render fallback icon\n(colored circle)]
+  F -- Yes --> H[Generate SVG via Recraft]
+  H --> I[Upload to Cloudinary]
+  I --> J[Cache URL]
+  J --> Z
+```
+
+### Component Relationships (Diagram)
+
+```mermaid
+flowchart LR
+  Viz[NetworkTopologyVisualizationEnhanced] --> NIM[nodeImageManager]
+  NIM --> Cache[(localStorage cache)]
+  NIM --> RC[recraftApi]
+  NIM --> CL[cloudinaryApi]
+  RC --> Recraft[(Recraft API)]
+  CL --> Cloudinary[(Cloudinary)]
+```
+
 ## Testing Checklist
 
 - [ ] Open Network Topology dashboard
@@ -56,9 +86,9 @@ Loaded 50 node images (5 auto-generated)
 ## Environment Variables Required
 
 ```
-VITE_CLOUDINARY_CLOUD_NAME=dod8ajzjd
-VITE_CLOUDINARY_API_KEY=841983555962286
-VITE_CLOUDINARY_API_SECRET=W1gSyjhw17u1vT5UQObDrDMmrl0
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key
+VITE_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 VITE_RECRAFT_API_URL=https://external.api.recraft.ai/v1
 VITE_RECRAFT_API_KEY=<your_key>
 ```
@@ -79,7 +109,7 @@ VITE_RECRAFT_API_KEY=<your_key>
 - **Rate**: Limited to 5 per visualization load
 
 ### Cloudinary API
-- **Endpoint**: `https://api.cloudinary.com/v1_1/dod8ajzjd/image/upload`
+- **Endpoint**: `https://api.cloudinary.com/v1_1/<cloud_name>/image/upload`
 - **Method**: POST
 - **Purpose**: Upload generated images
 - **Rate**: Limited to 5 per visualization load

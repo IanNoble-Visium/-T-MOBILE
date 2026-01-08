@@ -56,9 +56,9 @@ Uses browser's built-in Web Crypto API (no external dependencies needed).
 
 The following environment variables are required:
 ```
-VITE_CLOUDINARY_CLOUD_NAME=dod8ajzjd
-VITE_CLOUDINARY_API_KEY=841983555962286
-VITE_CLOUDINARY_API_SECRET=W1gSyjhw17u1vT5UQObDrDMmrl0
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+VITE_CLOUDINARY_API_KEY=your_cloudinary_api_key
+VITE_CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
 These are already in `.env` file.
@@ -85,7 +85,7 @@ All generated images will be organized in this folder in Cloudinary.
    Uploading image to Cloudinary: tmobile/network-nodes/node-007_los_angeles_data_center from https://...
    Cloudinary upload response status: 200
    Successfully uploaded image to Cloudinary: tmobile/network-nodes/node-007_los_angeles_data_center
-   Cloudinary secure_url: https://res.cloudinary.com/dod8ajzjd/image/upload/tmobile/network-nodes/node-007_los_angeles_data_center
+	   Cloudinary secure_url: https://res.cloudinary.com/<cloud_name>/image/upload/tmobile/network-nodes/node-007_los_angeles_data_center
    ```
 
 ## Verification

@@ -42,6 +42,16 @@
    
    Navigate to: `http://localhost:5173`
 
+### Local Dev Flow (Diagram)
+
+```mermaid
+flowchart TD
+  A[Clone / Extract repo] --> B[Install deps\n(pnpm install / npm install)]
+  B --> C[Start dev server\n(pnpm run dev)]
+  C --> D[Open browser\nhttp://localhost:5173]
+  D --> E[UI makes API calls\n(configured by VITE_API_BASE_URL)]
+```
+
 ### Build for Production
 
 To create a production build:
@@ -65,6 +75,17 @@ npm run preview
 ```
 
 ## Project Structure
+
+### High-Level UI Composition (Diagram)
+
+```mermaid
+flowchart LR
+  Main[main.jsx] --> App[App.jsx]
+  App --> Header[Header]
+  App --> Sidebar[Sidebar]
+  App --> Dashboards[src/components/dashboards/*]
+  Dashboards --> Shared[Shared UI\n(e.g., KPICard)]
+```
 
 ```
 tmobile-trucontext-demo/
