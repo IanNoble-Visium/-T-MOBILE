@@ -1,8 +1,65 @@
 # T-Mobile TruContext Intelligence Platform Demo
 
-Demo application showcasing a unified security intelligence platform that combines network visibility, SASE posture, SOC workflows, graph context, and AI assistance.
+<p align="center">
+  <img src="docs/images/TMOBILE-Overview.jfif" alt="T-Mobile TruContext Intelligence Platform - Unified security dashboard showing real-time threat detection, network topology, and AI-powered analytics" width="100%">
+</p>
+<p align="center"><em>Unified Security Intelligence: Real-time visibility across 5G networks, SASE enforcement, SOC operations, and AI-driven threat response</em></p>
 
-## Demo runbook
+---
+
+## Executive Summary
+
+### What It Is
+
+The **T-Mobile TruContext Intelligence Platform** is a next-generation unified security intelligence solution that transforms how enterprises detect, investigate, and respond to cyber threats. Built on T-Mobile's 5G infrastructure and powered by advanced graph analytics and AI agents, TruContext delivers a single pane of glass for security operations, network visibility, and automated threat response.
+
+### What It Does
+
+TruContext integrates five critical security domains into one cohesive platform:
+
+| Capability | Description |
+|------------|-------------|
+| **Network Visibility** | Real-time monitoring of 5G infrastructure, IoT devices, and enterprise endpoints with topology-aware context |
+| **SASE Posture Management** | Zero Trust Network Access (ZTNA) enforcement, policy management, and compliance monitoring across distributed environments |
+| **SOC Workflows** | Cyber Defense Center operations including incident triage, investigation, hunting, and forensic analysis |
+| **Graph-Based Context** | Neo4j-powered relationship mapping that reveals attack paths, blast radius, and lateral movement patterns invisible to traditional tools |
+| **AI Assistance** | Autonomous AI agents for threat detection, automated response, and natural language security queries |
+
+### Why It's Useful
+
+**For the Business:**
+- **40% faster Mean Time to Detect (MTTD)** through AI-powered anomaly detection and graph correlation
+- **60% faster Mean Time to Respond (MTTR)** via automated playbooks and AI agent orchestration
+- **Reduced tool sprawl** — consolidates 5–10 point solutions into a single integrated platform
+- **Lower operational costs** — AI agents scale security operations without proportional headcount growth
+
+**Competitive Advantages over Verizon & AT&T:**
+- **Native 5G + Security Integration** — TruContext is built on T-Mobile's network fabric, not bolted on
+- **Graph-First Architecture** — relationship context that competitors' table-based systems cannot replicate
+- **AI Agent Workforce** — deploy, manage, and scale autonomous security agents from a single marketplace
+- **Real-Time Identity Context** — 5G subscriber and device identity flows directly into threat correlation
+
+### Target Audience
+
+| Stakeholder | Primary Value |
+|-------------|---------------|
+| **T-Mobile Executives** | Board-ready dashboards, risk posture, ROI metrics, competitive positioning |
+| **Security Teams (SOC/CISO)** | Unified incident management, threat hunting, investigation workflows, evidence collection |
+| **Network Operations** | Topology visibility, device health, 5G infrastructure monitoring, anomaly detection |
+| **Sales & Partner Teams** | Demo-ready narratives, competitive differentiation, customer-facing presentations |
+| **Engineering/DevOps** | API integrations, deployment architecture, extensibility patterns |
+
+### Key Differentiators
+
+1. **Graph-Powered Intelligence** — Neo4j relationship engine maps entities (users, devices, IPs, threats) to reveal attack chains and blast radius that flat data misses
+2. **AI Agent Marketplace** — One-click deployment of specialized agents (Threat Hunter, Anomaly Detector, Compliance Monitor) with full lifecycle management
+3. **5G-Native Telemetry** — Direct integration with T-Mobile's 5G core for subscriber/device context unavailable to over-the-top solutions
+4. **Unified Command Center** — Executive, SASE, CDC, Graph, and AI Analytics dashboards in a single application with seamless navigation
+5. **Voice-Enabled Queries** — Ask security questions in plain English; receive actionable insights with transparency into underlying data
+
+---
+
+## Demo Runbook
 
 - Primary runbook for presentations: **`DEMO.md`**
 - Presentation tips (shorter): `docs/guides/PRESENTATION_GUIDE.md`

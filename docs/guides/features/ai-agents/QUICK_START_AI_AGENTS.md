@@ -206,8 +206,7 @@ Click user profile (top right) → Click "Logout"
 
 ### Available Guides
 - `docs/guides/AI_AGENTS_TESTING_GUIDE.md` - 10 detailed test scenarios
-- `AI_AGENTS_FIXES_SUMMARY.md` - Technical details of fixes
-- `AI_AGENTS_IMPLEMENTATION_COMPLETE.md` - Full implementation details
+- `docs/status/FINAL_STATUS_REPORT_AI_AGENTS.md` - Status and validation summary
 
 ---
 

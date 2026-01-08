@@ -285,7 +285,7 @@ console.log(settings.dataSource) // 'neo4j' or 'mock'
 - **Detailed Guide:** `docs/guides/HEADER_ENHANCEMENTS.md`
 - **Search Implementation:** `docs/guides/IMPLEMENTING_SEARCH_IN_DASHBOARDS.md`
 - **Testing Guide:** `docs/guides/TESTING_HEADER_FEATURES.md`
-- **Implementation Summary:** `HEADER_ENHANCEMENTS_SUMMARY.md`
+- **Implementation Summary:** `docs/status/FINAL_STATUS_REPORT.md`
 
 ---
 

@@ -3,10 +3,10 @@
 This roadmap separates polish we can apply before today’s demo from items that require production infrastructure or longer cycles. Each item lists: description, effort, dependencies, impact, and category. Checkboxes can be used for tracking.
 
 Cross-references:
-- README.md → Integration Roadmap
-- DEMO_READY_CHECKLIST.md → Recommended demo flow and health checks
+- README.md → Repository entrypoint
+- docs/guides/testing/DEMO_READY_CHECKLIST.md → Recommended demo flow and health checks
 - IMMEDIATE_ACTION_REQUIRED.md, SECURITY_REMEDIATION_REPORT.md → Credential rotation & history cleanup
-- BUG_FIX_AGENT_DETAIL_MODAL.md → Modal future enhancements
+- docs/status/FINAL_STATUS_REPORT_AI_AGENTS.md → AI Agents status and known follow-ups
 - docs/guides/AI_ANALYTICS_SETUP.md → AI Analytics next steps
 - docs/guides/HEADER_ENHANCEMENTS.md → Header future enhancements
 - docs/guides/NETWORK_TOPOLOGY_GUIDE.md → Topology future enhancements
@@ -30,7 +30,7 @@ Quick wins that improve the demo experience without backend/integration changes.
   - Dependencies: None (frontend only)
   - Impact: High
   - Category: Feature Enhancement
-  - Refs: BUG_FIX_AGENT_DETAIL_MODAL.md
+  - Refs: docs/status/FINAL_STATUS_REPORT_AI_AGENTS.md
 
 - [ ] Agent Search + Filters + Keyboard Shortcut
   - Description: Add search input and filters (status/type/model/performance); map Ctrl/Cmd+K to focus search.
@@ -38,7 +38,7 @@ Quick wins that improve the demo experience without backend/integration changes.
   - Dependencies: None (frontend only)
   - Impact: High
   - Category: Feature Enhancement / UX
-  - Refs: QUICK_START_AI_AGENTS.md (future Ctrl+K), HEADER_ENHANCEMENTS.md
+  - Refs: docs/guides/features/ai-agents/QUICK_START_AI_AGENTS.md (future Ctrl+K), docs/guides/HEADER_ENHANCEMENTS.md
 
 - [ ] Agent Performance Micro‑charts (sparklines) in Modal
   - Description: Show 24h trend sparkline for efficiency/accuracy using Recharts; mock data acceptable.
