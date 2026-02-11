@@ -14,7 +14,11 @@ import {
   MicOff,
   Volume2,
   VolumeX,
-  Radio
+  Radio,
+  Settings,
+  X,
+  Zap,
+  Bot
 } from 'lucide-react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
@@ -32,6 +36,14 @@ const AIAnalyticsDashboard = () => {
   const [dashboardContext, setDashboardContext] = useState(null);
   const [networkContext, setNetworkContext] = useState(null);
   const messagesEndRef = useRef(null);
+
+  // AI Provider settings
+  const [aiProvider, setAiProvider] = useState(() => {
+    try {
+      return localStorage.getItem('aiProvider') || 'openai';
+    } catch { return 'openai'; }
+  });
+  const [showSettings, setShowSettings] = useState(false);
 
   // Voice conversation states
   const [voiceEnabled, setVoiceEnabled] = useState(false);
@@ -156,6 +168,11 @@ const AIAnalyticsDashboard = () => {
     }
   };
 
+  const handleProviderChange = (provider) => {
+    setAiProvider(provider);
+    try { localStorage.setItem('aiProvider', provider); } catch {}
+  };
+
   const handleEnhanceQuery = async () => {
     if (!inputQuery.trim() || !dashboardContext) return;
     
@@ -194,9 +211,11 @@ const AIAnalyticsDashboard = () => {
         userQuery: userMessage.content,
         dashboardContext,
         networkContext: networkContext || {},
-        networkContextString: contextString || ''
+        networkContextString: contextString || '',
+        aiProvider
       });
 
+      const providerLabel = response.data.provider === 'zai' ? 'ZAI GLM-4.7' : 'OpenAI GPT-4o';
       const assistantMessage = {
         id: `assistant-${Date.now()}`,
         type: 'assistant',
@@ -204,7 +223,8 @@ const AIAnalyticsDashboard = () => {
         data: {
           sqlQuery: response.data.sqlQuery,
           results: response.data.results,
-          resultCount: response.data.resultCount
+          resultCount: response.data.resultCount,
+          provider: providerLabel
         },
         timestamp: new Date()
       };
@@ -214,7 +234,7 @@ const AIAnalyticsDashboard = () => {
       const errorMessage = {
         id: `error-${Date.now()}`,
         type: 'error',
-        content: error.response?.data?.error || 'Failed to process query. Please try again.',
+        content: error.response?.data?.details || error.response?.data?.error || 'Failed to process query. Please try again.',
         timestamp: new Date()
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -386,9 +406,11 @@ const AIAnalyticsDashboard = () => {
           userQuery: query,
           dashboardContext,
           networkContext: networkContext || {},
-          networkContextString: contextString || ''
+          networkContextString: contextString || '',
+          aiProvider
         });
 
+        const providerLabel = response.data.provider === 'zai' ? 'ZAI GLM-4.7' : 'OpenAI GPT-4o';
         const assistantMessage = {
           id: `assistant-${Date.now()}`,
           type: 'assistant',
@@ -396,7 +418,8 @@ const AIAnalyticsDashboard = () => {
           data: {
             sqlQuery: response.data.sqlQuery,
             results: response.data.results,
-            resultCount: response.data.resultCount
+            resultCount: response.data.resultCount,
+            provider: providerLabel
           },
           timestamp: new Date()
         };
@@ -412,7 +435,7 @@ const AIAnalyticsDashboard = () => {
             ? `Failed to process query: ${errorDetails.details}` 
             : errorDetails?.error 
             ? `Failed to process query: ${errorDetails.error}` 
-            : 'Failed to process query. Please check your Google API key configuration or try again.',
+            : 'Failed to process query. Please check your API key configuration or try again.',
           timestamp: new Date()
         };
         setMessages(prev => [...prev, errorMessage]);
@@ -471,7 +494,7 @@ const AIAnalyticsDashboard = () => {
                 <div className="mt-3 space-y-2">
                   <details className="text-xs">
                     <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
-                      View SQL Query ({message.data.resultCount} results)
+                      View SQL Query ({message.data.resultCount} results){message.data.provider ? ` · ${message.data.provider}` : ''}
                     </summary>
                     <pre className="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">
                       {message.data.sqlQuery}
@@ -501,12 +524,27 @@ const AIAnalyticsDashboard = () => {
               <h1 className="text-4xl font-bold">AI Security Analytics</h1>
             </div>
             <p className="text-lg opacity-90">
-              Natural Language Intelligence powered by GPT-5.2 Pro & ZAI GLM-4.7
+              Natural Language Intelligence powered by {aiProvider === 'openai' ? 'OpenAI GPT-4o' : 'ZAI GLM-4.7'}
             </p>
           </div>
           
-          {/* Voice Mode Toggle */}
+          {/* Controls: Settings + Voice */}
           <div className="flex flex-col items-end gap-2">
+            {/* Settings + Voice Row */}
+            <div className="flex items-center gap-2">
+              {/* AI Settings Gear */}
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className={`relative p-3 rounded-lg font-semibold transition-all duration-300 ${
+                  showSettings
+                    ? 'bg-white text-primary shadow-lg'
+                    : 'bg-white/20 text-white hover:bg-white/30'
+                }`}
+                title="AI Provider Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+              
               <button
                 onClick={toggleVoiceMode}
                 className={`relative px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
@@ -529,6 +567,8 @@ const AIAnalyticsDashboard = () => {
                   )}
                 </div>
               </button>
+              
+            </div>
               
               {/* Voice Status Indicator */}
               {voiceEnabled && (
@@ -553,12 +593,106 @@ const AIAnalyticsDashboard = () => {
                   )}
                 </div>
               )}
+
+              {/* Provider Badge */}
+              <div className="flex items-center gap-1.5 bg-white/10 px-3 py-1 rounded-full text-xs">
+                <Zap className="w-3 h-3" />
+                <span>{aiProvider === 'openai' ? 'OpenAI GPT-4o' : 'ZAI GLM-4.7'}</span>
+              </div>
             </div>
         </div>
         <div className="absolute top-0 right-0 w-64 h-64 opacity-10">
           <Sparkles className="w-full h-full" />
         </div>
       </div>
+
+      {/* AI Provider Settings Panel */}
+      {showSettings && (
+        <div className="bg-card rounded-lg border border-border p-5 animate-fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold">AI Provider Settings</h3>
+            </div>
+            <button
+              onClick={() => setShowSettings(false)}
+              className="p-1 hover:bg-accent rounded-md transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* OpenAI Option */}
+            <button
+              onClick={() => handleProviderChange('openai')}
+              className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+                aiProvider === 'openai'
+                  ? 'border-primary bg-primary/10 shadow-md'
+                  : 'border-border hover:border-primary/50 hover:bg-accent/50'
+              }`}
+            >
+              {aiProvider === 'openai' && (
+                <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+              )}
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  aiProvider === 'openai' ? 'bg-primary/20' : 'bg-muted'
+                }`}>
+                  <Zap className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">OpenAI</p>
+                  <p className="text-xs text-muted-foreground">GPT-4o</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Fast, reliable responses. Recommended for demos and production use.
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-500 rounded">Fast</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-blue-500/10 text-blue-500 rounded">Reliable</span>
+              </div>
+            </button>
+
+            {/* ZAI Option */}
+            <button
+              onClick={() => handleProviderChange('zai')}
+              className={`relative p-4 rounded-lg border-2 transition-all text-left ${
+                aiProvider === 'zai'
+                  ? 'border-primary bg-primary/10 shadow-md'
+                  : 'border-border hover:border-primary/50 hover:bg-accent/50'
+              }`}
+            >
+              {aiProvider === 'zai' && (
+                <div className="absolute top-2 right-2 w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
+              )}
+              <div className="flex items-center gap-3 mb-2">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  aiProvider === 'zai' ? 'bg-primary/20' : 'bg-muted'
+                }`}>
+                  <Bot className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">ZAI</p>
+                  <p className="text-xs text-muted-foreground">GLM-4.7</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Alternative provider. May have higher latency.
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-[10px] px-1.5 py-0.5 bg-yellow-500/10 text-yellow-500 rounded">Slower</span>
+                <span className="text-[10px] px-1.5 py-0.5 bg-purple-500/10 text-purple-500 rounded">Alternative</span>
+              </div>
+            </button>
+          </div>
+          
+          <p className="text-xs text-muted-foreground mt-3">
+            Provider selection is saved and persists across sessions. Switch to OpenAI for faster responses during demos.
+          </p>
+        </div>
+      )}
 
       {/* Voice Transcript Display */}
       {voiceEnabled && transcript && (

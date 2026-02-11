@@ -19,16 +19,17 @@ const openai = new OpenAI({
 // Natural language query endpoint
 router.post('/query', async (req, res) => {
   try {
-    const { userQuery, dashboardContext = {} } = req.body;
+    const { userQuery, dashboardContext = {}, aiProvider = 'openai' } = req.body;
     
     if (!userQuery) {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    console.log('Processing natural language query:', userQuery);
+    const provider = ['openai', 'zai'].includes(aiProvider) ? aiProvider : 'openai';
+    console.log(`Processing query with ${provider}: ${userQuery}`);
 
     // Step 1: Convert natural language to SQL
-    const sqlQuery = await naturalLanguageToSQL(userQuery, dashboardContext);
+    const sqlQuery = await naturalLanguageToSQL(userQuery, dashboardContext, provider);
     console.log('Generated SQL:', sqlQuery);
 
     // Step 2: Validate SQL (basic security check)
@@ -63,14 +64,15 @@ router.post('/query', async (req, res) => {
     }
 
     // Step 4: Generate human-readable explanation
-    const explanation = await explainResults(userQuery, sqlQuery, results, dashboardContext);
+    const explanation = await explainResults(userQuery, sqlQuery, results, dashboardContext, provider);
 
     res.json({
       query: userQuery,
       sqlQuery,
       results,
       explanation,
-      resultCount: results.length
+      resultCount: results.length,
+      provider
     });
 
   } catch (error) {
@@ -99,10 +101,13 @@ router.post('/enhance-query', async (req, res) => {
       contextSummary = generateDashboardSummary(dashboardContext.data);
     }
 
+    const { aiProvider = 'openai' } = req.body;
+    const provider = ['openai', 'zai'].includes(aiProvider) ? aiProvider : 'openai';
+    
     const enhancedQuery = await enhanceQuery(userQuery, {
       ...dashboardContext,
       summary: contextSummary
-    });
+    }, provider);
 
     res.json({
       originalQuery: userQuery,
