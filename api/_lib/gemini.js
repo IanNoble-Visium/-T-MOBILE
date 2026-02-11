@@ -3,19 +3,66 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Gemini AI (latest model)
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-3-pro' });
+// Validate Google API key
+const googleApiKey = process.env.GOOGLE_API_KEY;
+if (!googleApiKey) {
+  console.error('GOOGLE_API_KEY environment variable is not set');
+}
+
+// Initialize Gemini AI (latest model) - only if API key exists
+let genAI = null;
+let model = null;
+
+if (googleApiKey) {
+  try {
+    genAI = new GoogleGenerativeAI(googleApiKey);
+    model = genAI.getGenerativeModel({ model: 'gemini-3-pro' });
+  } catch (initError) {
+    console.error('Failed to initialize Gemini AI:', initError);
+  }
+}
 
 // Generate response from Gemini
 export async function generateResponse(prompt, context = {}) {
+  // Check if API key is configured
+  if (!googleApiKey) {
+    const errorMsg = 'GOOGLE_API_KEY environment variable is not configured. Please set it in your Vercel environment variables.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
+  // Check if model is initialized
+  if (!model) {
+    const errorMsg = 'Gemini AI model failed to initialize. Please check your GOOGLE_API_KEY.';
+    console.error(errorMsg);
+    throw new Error(errorMsg);
+  }
+
   try {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     return response.text();
   } catch (error) {
-    console.error('Gemini API error:', error);
-    throw new Error('Failed to generate AI response');
+    // Log detailed error information
+    console.error('Gemini API error details:');
+    console.error('- Error message:', error.message);
+    console.error('- Error code:', error.code);
+    console.error('- Error status:', error.status);
+    console.error('- Full error:', JSON.stringify(error, null, 2));
+    
+    // Provide more specific error messages
+    if (error.message?.includes('API_KEY')) {
+      throw new Error('Invalid or missing Google API key. Please check your GOOGLE_API_KEY environment variable.');
+    }
+    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
+      throw new Error('Gemini API quota exceeded or rate limited. Please try again later.');
+    }
+    if (error.message?.includes('safety')) {
+      throw new Error('Gemini API blocked the request due to safety filters. Please rephrase your query.');
+    }
+    
+    // Generic error with actual message
+    throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
   }
 }
 
