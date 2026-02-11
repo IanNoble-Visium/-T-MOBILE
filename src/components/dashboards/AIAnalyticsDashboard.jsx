@@ -366,11 +366,59 @@ const AIAnalyticsDashboard = () => {
     }
   };
 
-  const handleSuggestedQuery = (query) => {
+  const handleSuggestedQuery = async (query) => {
     if (voiceEnabled) {
       handleVoiceInput(query);
     } else {
-      setInputQuery(query);
+      // Auto-submit the suggested query
+      const userMessage = {
+        id: `user-${Date.now()}`,
+        type: 'user',
+        content: query,
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, userMessage]);
+      setIsLoading(true);
+
+      try {
+        const response = await axios.post(`${API_BASE_URL}/ai/query`, {
+          userQuery: query,
+          dashboardContext,
+          networkContext: networkContext || {},
+          networkContextString: contextString || ''
+        });
+
+        const assistantMessage = {
+          id: `assistant-${Date.now()}`,
+          type: 'assistant',
+          content: response.data.explanation,
+          data: {
+            sqlQuery: response.data.sqlQuery,
+            results: response.data.results,
+            resultCount: response.data.resultCount
+          },
+          timestamp: new Date()
+        };
+
+        setMessages(prev => [...prev, assistantMessage]);
+      } catch (error) {
+        console.error('Query error:', error);
+        const errorDetails = error.response?.data;
+        const errorMessage = {
+          id: `error-${Date.now()}`,
+          type: 'error',
+          content: errorDetails?.details 
+            ? `Failed to process query: ${errorDetails.details}` 
+            : errorDetails?.error 
+            ? `Failed to process query: ${errorDetails.error}` 
+            : 'Failed to process query. Please check your Google API key configuration or try again.',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
