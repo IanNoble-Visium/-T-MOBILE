@@ -53,6 +53,7 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
   const textureLoader = useRef(new THREE.TextureLoader())
   const flybyRef = useRef(null)
   const flybyAngleRef = useRef(0)
+  const prevLayout3DRef = useRef('default')
 
   // Load node images when icon mode is enabled
   useEffect(() => {
@@ -130,83 +131,96 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
     return { nodes: graphNodes, links: graphLinks }
   }, [nodes, edges, alarmedNodeIds, selectedNodeId])
 
-  // Apply 3D layout when layout changes
+  // Apply 3D layout when layout changes (skip on initial mount)
   useEffect(() => {
+    // Skip if layout hasn't actually changed (avoids running on every graphData update)
+    if (prevLayout3DRef.current === layout3D && layout3D === 'default') {
+      return
+    }
+    prevLayout3DRef.current = layout3D
+
     if (!fgRef.current || !graphData.nodes.length) return
 
     const fg = fgRef.current
     const gNodes = graphData.nodes
 
-    if (layout3D === 'default') {
-      // Reset to standard force-directed: clear fixed positions
-      gNodes.forEach(n => { n.fx = undefined; n.fy = undefined; n.fz = undefined })
-      fg.d3Force('charge')?.strength(-120)
-      fg.d3Force('center')?.strength(1)
-      fg.d3ReheatSimulation()
-    } else if (layout3D === 'hierarchical') {
-      // Layer nodes by type vertically
-      const layerHeight = 60
-      const nodesPerType = {}
-      gNodes.forEach(n => {
-        const t = n.type || 'cell_tower'
-        if (!nodesPerType[t]) nodesPerType[t] = []
-        nodesPerType[t].push(n)
-      })
-      Object.entries(nodesPerType).forEach(([type, typeNodes]) => {
-        const layerIdx = TYPE_LAYERS.indexOf(type)
-        const y = (layerIdx >= 0 ? layerIdx : TYPE_LAYERS.length) * layerHeight - ((TYPE_LAYERS.length - 1) * layerHeight) / 2
-        const cols = Math.ceil(Math.sqrt(typeNodes.length))
-        typeNodes.forEach((n, i) => {
-          const col = i % cols
-          const row = Math.floor(i / cols)
-          n.fx = (col - (cols - 1) / 2) * 40
-          n.fy = y
-          n.fz = (row - (Math.ceil(typeNodes.length / cols) - 1) / 2) * 40
+    // Wrap in try-catch to guard against simulation not being ready
+    try {
+      if (layout3D === 'default') {
+        // Reset to standard force-directed: clear fixed positions
+        gNodes.forEach(n => { n.fx = undefined; n.fy = undefined; n.fz = undefined })
+        const charge = fg.d3Force('charge')
+        if (charge) charge.strength(-120)
+        const center = fg.d3Force('center')
+        if (center) center.strength(1)
+        fg.d3ReheatSimulation()
+      } else if (layout3D === 'hierarchical') {
+        // Layer nodes by type vertically
+        const layerHeight = 60
+        const nodesPerType = {}
+        gNodes.forEach(n => {
+          const t = n.type || 'cell_tower'
+          if (!nodesPerType[t]) nodesPerType[t] = []
+          nodesPerType[t].push(n)
         })
-      })
-      fg.d3ReheatSimulation()
-    } else if (layout3D === 'spherical') {
-      // Distribute nodes on a sphere surface using golden-angle spiral
-      const radius = Math.max(80, gNodes.length * 3)
-      const goldenAngle = Math.PI * (3 - Math.sqrt(5))
-      gNodes.forEach((n, i) => {
-        const y = 1 - (i / (gNodes.length - 1 || 1)) * 2 // -1 to 1
-        const radiusAtY = Math.sqrt(1 - y * y)
-        const theta = goldenAngle * i
-        n.fx = Math.cos(theta) * radiusAtY * radius
-        n.fy = y * radius
-        n.fz = Math.sin(theta) * radiusAtY * radius
-      })
-      fg.d3ReheatSimulation()
-    } else if (layout3D === 'clustered') {
-      // Group nodes by region in 3D clusters
-      const regions = [...new Set(gNodes.map(n => n.region))]
-      const clusterAngle = (2 * Math.PI) / (regions.length || 1)
-      const clusterRadius = Math.max(80, regions.length * 30)
-      const regionMap = {}
-      regions.forEach((r, i) => { regionMap[r] = i })
-
-      const nodesPerRegion = {}
-      gNodes.forEach(n => {
-        const r = n.region || 'Unknown'
-        if (!nodesPerRegion[r]) nodesPerRegion[r] = []
-        nodesPerRegion[r].push(n)
-      })
-
-      Object.entries(nodesPerRegion).forEach(([region, rNodes]) => {
-        const idx = regionMap[region] || 0
-        const cx = Math.cos(clusterAngle * idx) * clusterRadius
-        const cz = Math.sin(clusterAngle * idx) * clusterRadius
-        const spread = Math.max(20, rNodes.length * 3)
-        rNodes.forEach((n, i) => {
-          const angle = (2 * Math.PI * i) / rNodes.length
-          const r = spread * Math.sqrt((i + 1) / rNodes.length) * 0.6
-          n.fx = cx + Math.cos(angle) * r
-          n.fy = (Math.random() - 0.5) * spread * 0.5
-          n.fz = cz + Math.sin(angle) * r
+        Object.entries(nodesPerType).forEach(([type, typeNodes]) => {
+          const layerIdx = TYPE_LAYERS.indexOf(type)
+          const y = (layerIdx >= 0 ? layerIdx : TYPE_LAYERS.length) * layerHeight - ((TYPE_LAYERS.length - 1) * layerHeight) / 2
+          const cols = Math.ceil(Math.sqrt(typeNodes.length))
+          typeNodes.forEach((n, i) => {
+            const col = i % cols
+            const row = Math.floor(i / cols)
+            n.fx = (col - (cols - 1) / 2) * 40
+            n.fy = y
+            n.fz = (row - (Math.ceil(typeNodes.length / cols) - 1) / 2) * 40
+          })
         })
-      })
-      fg.d3ReheatSimulation()
+        fg.d3ReheatSimulation()
+      } else if (layout3D === 'spherical') {
+        // Distribute nodes on a sphere surface using golden-angle spiral
+        const radius = Math.max(80, gNodes.length * 3)
+        const goldenAngle = Math.PI * (3 - Math.sqrt(5))
+        gNodes.forEach((n, i) => {
+          const y = 1 - (i / (gNodes.length - 1 || 1)) * 2 // -1 to 1
+          const radiusAtY = Math.sqrt(1 - y * y)
+          const theta = goldenAngle * i
+          n.fx = Math.cos(theta) * radiusAtY * radius
+          n.fy = y * radius
+          n.fz = Math.sin(theta) * radiusAtY * radius
+        })
+        fg.d3ReheatSimulation()
+      } else if (layout3D === 'clustered') {
+        // Group nodes by region in 3D clusters
+        const regions = [...new Set(gNodes.map(n => n.region))]
+        const clusterAngle = (2 * Math.PI) / (regions.length || 1)
+        const clusterRadius = Math.max(80, regions.length * 30)
+        const regionMap = {}
+        regions.forEach((r, i) => { regionMap[r] = i })
+
+        const nodesPerRegion = {}
+        gNodes.forEach(n => {
+          const r = n.region || 'Unknown'
+          if (!nodesPerRegion[r]) nodesPerRegion[r] = []
+          nodesPerRegion[r].push(n)
+        })
+
+        Object.entries(nodesPerRegion).forEach(([region, rNodes]) => {
+          const idx = regionMap[region] || 0
+          const cx = Math.cos(clusterAngle * idx) * clusterRadius
+          const cz = Math.sin(clusterAngle * idx) * clusterRadius
+          const spread = Math.max(20, rNodes.length * 3)
+          rNodes.forEach((n, i) => {
+            const angle = (2 * Math.PI * i) / rNodes.length
+            const r = spread * Math.sqrt((i + 1) / rNodes.length) * 0.6
+            n.fx = cx + Math.cos(angle) * r
+            n.fy = (Math.random() - 0.5) * spread * 0.5
+            n.fz = cz + Math.sin(angle) * r
+          })
+        })
+        fg.d3ReheatSimulation()
+      }
+    } catch (err) {
+      console.warn('Layout effect: simulation not ready yet, skipping', err)
     }
   }, [layout3D, graphData])
 
