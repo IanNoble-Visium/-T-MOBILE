@@ -1,4 +1,4 @@
-# T-Mobile TruContext Intelligence Platform Demo
+# T-Mobile TruContext Intelligence Platform
 
 <p align="center">
   <img src="docs/images/TMOBILE-Overview.jfif" alt="T-Mobile TruContext Intelligence Platform - Unified security dashboard showing real-time threat detection, network topology, and AI-powered analytics" width="100%">
@@ -30,7 +30,7 @@ TruContext integrates five critical security domains into one cohesive platform:
 **For the Business:**
 - **40% faster Mean Time to Detect (MTTD)** through AI-powered anomaly detection and graph correlation
 - **60% faster Mean Time to Respond (MTTR)** via automated playbooks and AI agent orchestration
-- **Reduced tool sprawl** — consolidates 5–10 point solutions into a single integrated platform
+- **Reduced tool sprawl** — consolidates 5-10 point solutions into a single integrated platform
 - **Lower operational costs** — AI agents scale security operations without proportional headcount growth
 
 **Competitive Advantages over Verizon & AT&T:**
@@ -59,6 +59,92 @@ TruContext integrates five critical security domains into one cohesive platform:
 
 ---
 
+## Recent Changes (February 2026)
+
+### AI Provider System (Multi-Provider Support)
+
+The platform now supports **switchable AI providers** for all natural language query features:
+
+| Provider | Model | Status | Notes |
+|----------|-------|--------|-------|
+| **OpenAI** | `gpt-4o` | **Default** | Fast, reliable. Recommended for demos. |
+| **ZAI** | `glm-4.7` | Available | Alternative provider via `api.z.ai` |
+
+- **Settings gear icon** on the AI Analytics Dashboard allows live switching between providers
+- Provider selection persists across sessions via `localStorage`
+- Each response shows which provider was used
+- Backend supports both providers with unified OpenAI-compatible API format
+
+**Environment Variables Required:**
+```
+OPENAI_API_KEY=sk-...      # Required (default provider)
+ZAI_API_KEY=...            # Optional (alternative provider)
+```
+
+### AI/LLM Model Updates
+
+All legacy AI model references updated across the codebase:
+
+| Legacy Model | Replacement | Provider |
+|-------------|-------------|----------|
+| GPT-4, GPT-4 Turbo, GPT-4o | GPT-5.2 Pro | OpenAI |
+| GPT-4 (code/technical) | GPT-5.2 Codex | OpenAI |
+| Gemini Pro, Gemini Ultra | Gemini 3 Pro | Google |
+| Claude 3 Opus, Claude 3 Sonnet | Claude Opus 4.6 | Anthropic |
+| *(new)* | Grok 4.1 Fast | xAI |
+
+- Updated in mock data (`aiAgentMockData.js`), agent marketplace, and documentation
+- Voice chat uses `gpt-5.2-chat-latest` with fallback chain
+
+### 3D Network Topology (react-force-graph-3d)
+
+Replaced the custom `@react-three/fiber` implementation with `react-force-graph-3d`:
+
+- **Force-directed layout** for automatic node positioning
+- **Color-coded nodes** by type and alarm status with glow effects
+- **Directional edge arrows** with utilization-based coloring
+- **Click-to-focus** camera animation on node selection
+- **Drag-and-drop** node repositioning
+- **Camera presets** (top, front, side, isometric views)
+- **Fullscreen mode** with keyboard shortcut (F)
+
+### Geographic Map Dashboard Enhancements
+
+Feature parity with the Network Topology Dashboard:
+
+- **Edge visualization** on Leaflet map with Polylines between connected nodes
+- **Color-coded edges** based on alarm severity and utilization
+- **Line thickness** based on bandwidth, dashed lines for high latency
+- **Interactive edge clicks** opening `NetworkNodeDetail` modal
+- **Enhanced node clicks** using the same detail modal
+- **Right-click context menu** for node image regeneration via `NodeImageRegenerator`
+- **Z-index fixes** ensuring modals and dialogs render above the map layer
+
+### Bot Identity System (AI Agents)
+
+New "Bot Identity System" configuration section in the Agent Detail Modal:
+
+- Six identity components per agent: `IDENTITY.md`, `SOUL.md`, `HEARTBEAT.md`, `USER.md`, `TOOLS.md`, `MEMORY.md`
+- Clickable cards with icons and color coding
+- Full markdown content viewer in a modal overlay
+- Contextually generated content for all 40 agents based on their role/type
+- Consistent with T-Mobile design system (magenta accents, dark theme)
+
+### Voice Chat Improvements
+
+- Fixed `max_tokens` deprecation: uses `max_completion_tokens` for newer OpenAI models
+- Model fallback chain: `gpt-5.2-chat-latest` -> `gpt-5.1-chat-latest` -> `gpt-4o` -> `gpt-3.5-turbo`
+- Retry logic for parameter compatibility across model versions
+
+### Performance & Reliability
+
+- **Vercel timeout** increased from 30s to 60s (`vercel.json` + per-function config)
+- **Request-level timeout** via `AbortController` (55s) with graceful error messages
+- **Reduced `max_tokens`** from 2000 to 1000 for faster AI responses
+- **Optimized prompts** — shorter, more focused prompts reduce token usage and latency
+
+---
+
 ## Demo Runbook
 
 - Primary runbook for presentations: **`DEMO.md`**
@@ -76,40 +162,63 @@ Core dashboards/routes:
 - AI Analytics (`/ai-analytics`)
 - Graph Analytics (`/graph-analytics`)
 - Network Topology (`/network-topology`)
+- Geographic Map (`/geographic-map`)
 
 ## Quick start (local)
 
-Prereqs: Node.js 18+
+Prereqs: Node.js 18+, pnpm
 
 1. Install
    - `pnpm install`
 
-2. Run (frontend + backend)
+2. Configure
+   - Copy `.env.example` to `.env` and fill in values
+   - At minimum, set `OPENAI_API_KEY` for AI features
+
+3. Run (frontend + backend)
    - `pnpm start`
 
-3. Open
+4. Open
    - Frontend: http://localhost:5173
    - Backend: http://localhost:3001
 
 ## Configuration
 
-- Copy `.env.example` to `.env` and fill in values as needed.
-- The app supports optional integrations:
-  - PostgreSQL (Neon) for real metrics/events
-  - Neo4j (Aura) for topology/relationships
-  - Gemini/OpenAI for AI features
+The app supports optional integrations:
 
-Reference:
-- `docs/technical/deployment/ENVIRONMENT_VARIABLES_REFERENCE.md`
+| Integration | Env Variable | Purpose |
+|-------------|-------------|---------|
+| **OpenAI** | `OPENAI_API_KEY` | AI queries, voice chat, text-to-speech (default provider) |
+| **ZAI** | `ZAI_API_KEY` | Alternative AI provider (GLM-4.7) |
+| **PostgreSQL** | `POSTGRES_URL` | Real metrics/events from Neon |
+| **Neo4j** | `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` | Graph topology/relationships |
+| **Cloudinary** | `CLOUDINARY_*` | Node image storage and regeneration |
+| **Recraft** | `RECRAFT_API_KEY` | AI image generation for network nodes |
+
+Reference: `docs/technical/deployment/ENVIRONMENT_VARIABLES_REFERENCE.md`
 
 ## Useful scripts
 
-- `pnpm dev` - frontend (Vite)
-- `pnpm server` - backend (Express)
-- `pnpm server:dev` - backend with watch
-- `pnpm start` - run both concurrently
-- `pnpm lint` - eslint
-- `pnpm build` / `pnpm preview` - production build
+- `pnpm dev` — frontend (Vite)
+- `pnpm server` — backend (Express)
+- `pnpm server:dev` — backend with watch
+- `pnpm start` — run both concurrently
+- `pnpm lint` — eslint
+- `pnpm build` / `pnpm preview` — production build
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 19, Vite, Tailwind CSS 4, Shadcn UI, Radix primitives |
+| 3D Visualization | `react-force-graph-3d`, Three.js |
+| Maps | Leaflet, `react-leaflet` |
+| Charts | Recharts, ECharts |
+| Backend | Express.js (dev), Vercel Serverless Functions (prod) |
+| Database | PostgreSQL (Neon), Neo4j (Aura) |
+| AI Providers | OpenAI (GPT-4o), ZAI (GLM-4.7) |
+| Voice | OpenAI Whisper (STT), OpenAI TTS |
+| Deployment | Vercel, pnpm |
 
 ## Documentation Index
 

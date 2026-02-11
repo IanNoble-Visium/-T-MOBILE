@@ -23,6 +23,17 @@ const CAMERA_PRESETS = {
   dynamic: { position: { x: 200, y: 200, z: 200 }, name: 'Dynamic' }
 }
 
+// 3D Layout options
+const LAYOUT_3D = {
+  default: { name: 'Force-Directed', description: 'Organic physics simulation' },
+  hierarchical: { name: 'Hierarchical', description: 'Layered by node type' },
+  spherical: { name: 'Spherical', description: 'Nodes on a sphere surface' },
+  clustered: { name: 'Clustered', description: 'Grouped by region' }
+}
+
+// Node type hierarchy order for hierarchical layout
+const TYPE_LAYERS = ['data_center', 'gateway', 'firewall', 'router', 'switch', 'cell_tower']
+
 /**
  * Enhanced 3D Network Topology Component using 3d-force-graph
  * Provides superior performance and visual quality compared to custom Three.js implementation
@@ -35,9 +46,13 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
   const [showIcons, setShowIcons] = useState(false)
   const [nodeImages, setNodeImages] = useState({})
   const [iconsLoading, setIconsLoading] = useState(false)
+  const [layout3D, setLayout3D] = useState('default')
+  const [autoFlyby, setAutoFlyby] = useState(false)
   const containerRef = useRef(null)
   const textureCache = useRef(new Map())
   const textureLoader = useRef(new THREE.TextureLoader())
+  const flybyRef = useRef(null)
+  const flybyAngleRef = useRef(0)
 
   // Load node images when icon mode is enabled
   useEffect(() => {
@@ -67,6 +82,129 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
       loadImages()
     }
   }, [nodes, showIcons])
+
+  // Apply 3D layout when layout changes
+  useEffect(() => {
+    if (!fgRef.current || !graphData.nodes.length) return
+
+    const fg = fgRef.current
+    const gNodes = graphData.nodes
+
+    if (layout3D === 'default') {
+      // Reset to standard force-directed: clear fixed positions
+      gNodes.forEach(n => { n.fx = undefined; n.fy = undefined; n.fz = undefined })
+      fg.d3Force('charge')?.strength(-120)
+      fg.d3Force('center')?.strength(1)
+      fg.d3ReheatSimulation()
+    } else if (layout3D === 'hierarchical') {
+      // Layer nodes by type vertically
+      const layerHeight = 60
+      const nodesPerType = {}
+      gNodes.forEach(n => {
+        const t = n.type || 'cell_tower'
+        if (!nodesPerType[t]) nodesPerType[t] = []
+        nodesPerType[t].push(n)
+      })
+      Object.entries(nodesPerType).forEach(([type, typeNodes]) => {
+        const layerIdx = TYPE_LAYERS.indexOf(type)
+        const y = (layerIdx >= 0 ? layerIdx : TYPE_LAYERS.length) * layerHeight - ((TYPE_LAYERS.length - 1) * layerHeight) / 2
+        const cols = Math.ceil(Math.sqrt(typeNodes.length))
+        typeNodes.forEach((n, i) => {
+          const col = i % cols
+          const row = Math.floor(i / cols)
+          n.fx = (col - (cols - 1) / 2) * 40
+          n.fy = y
+          n.fz = (row - (Math.ceil(typeNodes.length / cols) - 1) / 2) * 40
+        })
+      })
+      fg.d3ReheatSimulation()
+    } else if (layout3D === 'spherical') {
+      // Distribute nodes on a sphere surface using golden-angle spiral
+      const radius = Math.max(80, gNodes.length * 3)
+      const goldenAngle = Math.PI * (3 - Math.sqrt(5))
+      gNodes.forEach((n, i) => {
+        const y = 1 - (i / (gNodes.length - 1 || 1)) * 2 // -1 to 1
+        const radiusAtY = Math.sqrt(1 - y * y)
+        const theta = goldenAngle * i
+        n.fx = Math.cos(theta) * radiusAtY * radius
+        n.fy = y * radius
+        n.fz = Math.sin(theta) * radiusAtY * radius
+      })
+      fg.d3ReheatSimulation()
+    } else if (layout3D === 'clustered') {
+      // Group nodes by region in 3D clusters
+      const regions = [...new Set(gNodes.map(n => n.region))]
+      const clusterAngle = (2 * Math.PI) / (regions.length || 1)
+      const clusterRadius = Math.max(80, regions.length * 30)
+      const regionMap = {}
+      regions.forEach((r, i) => { regionMap[r] = i })
+
+      const nodesPerRegion = {}
+      gNodes.forEach(n => {
+        const r = n.region || 'Unknown'
+        if (!nodesPerRegion[r]) nodesPerRegion[r] = []
+        nodesPerRegion[r].push(n)
+      })
+
+      Object.entries(nodesPerRegion).forEach(([region, rNodes]) => {
+        const idx = regionMap[region] || 0
+        const cx = Math.cos(clusterAngle * idx) * clusterRadius
+        const cz = Math.sin(clusterAngle * idx) * clusterRadius
+        const spread = Math.max(20, rNodes.length * 3)
+        rNodes.forEach((n, i) => {
+          const angle = (2 * Math.PI * i) / rNodes.length
+          const r = spread * Math.sqrt((i + 1) / rNodes.length) * 0.6
+          n.fx = cx + Math.cos(angle) * r
+          n.fy = (Math.random() - 0.5) * spread * 0.5
+          n.fz = cz + Math.sin(angle) * r
+        })
+      })
+      fg.d3ReheatSimulation()
+    }
+  }, [layout3D, graphData])
+
+  // Auto flyby camera animation
+  useEffect(() => {
+    if (!autoFlyby || !fgRef.current) {
+      if (flybyRef.current) {
+        cancelAnimationFrame(flybyRef.current)
+        flybyRef.current = null
+      }
+      return
+    }
+
+    const fg = fgRef.current
+    const startTime = Date.now()
+    // Randomise orbit parameters
+    const baseRadius = 250
+    const verticalAmplitude = 80
+    const speed = 0.0003
+    const wobble1 = 0.3 + Math.random() * 0.4
+    const wobble2 = 0.2 + Math.random() * 0.3
+    const phaseOffset = Math.random() * Math.PI * 2
+
+    const animate = () => {
+      const elapsed = (Date.now() - startTime) * speed
+      const angle = flybyAngleRef.current + elapsed
+
+      const radius = baseRadius + Math.sin(angle * wobble1 + phaseOffset) * 60
+      const x = Math.cos(angle) * radius
+      const z = Math.sin(angle) * radius
+      const y = Math.sin(angle * wobble2 + phaseOffset) * verticalAmplitude
+
+      fg.cameraPosition({ x, y, z }, { x: 0, y: 0, z: 0 }, 0)
+      flybyRef.current = requestAnimationFrame(animate)
+    }
+
+    flybyRef.current = requestAnimationFrame(animate)
+
+    return () => {
+      if (flybyRef.current) {
+        cancelAnimationFrame(flybyRef.current)
+        flybyRef.current = null
+      }
+    }
+  }, [autoFlyby])
 
   // Transform nodes and edges to 3d-force-graph format
   const graphData = useMemo(() => {
@@ -115,18 +253,19 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
     return { nodes: graphNodes, links: graphLinks }
   }, [nodes, edges, alarmedNodeIds, selectedNodeId])
 
-  // Handle node click
+  // Handle node click — also stop flyby
   const handleNodeClick = useCallback((node) => {
+    setAutoFlyby(false)
     setSelectedNode(node)
     if (onNodeClick) {
       onNodeClick(node)
     }
-    
+
     // Focus camera on clicked node
     if (fgRef.current) {
       const distance = 100
       const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z)
-      
+
       fgRef.current.cameraPosition(
         {
           x: node.x * distRatio,
@@ -155,10 +294,11 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
     }
   }, [onNodeLeave])
 
-  // Camera preset handler
+  // Camera preset handler — also stop flyby
   const handleCameraPreset = useCallback((presetKey) => {
+    setAutoFlyby(false)
     if (!fgRef.current) return
-    
+
     const preset = CAMERA_PRESETS[presetKey]
     fgRef.current.cameraPosition(preset.position, { x: 0, y: 0, z: 0 }, 2000)
   }, [])
@@ -319,6 +459,7 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
           node.fz = node.z
         }}
         onBackgroundClick={() => {
+          setAutoFlyby(false)
           setSelectedNode(null)
           setHoveredNode(null)
         }}
@@ -382,6 +523,25 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
             <p className="text-yellow-400/80 text-[9px] mt-1">No cached icons found. Generate via 2D Enhanced view first.</p>
           )}
         </div>
+        <div className="border-t border-cyan-400/30 pt-3 mb-3">
+          <p className="text-cyan-400 font-bold mb-2">3D LAYOUT</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {Object.entries(LAYOUT_3D).map(([key, layout]) => (
+              <button
+                key={key}
+                onClick={() => setLayout3D(key)}
+                className={`px-2 py-1 border rounded text-[10px] font-bold transition-colors ${
+                  layout3D === key
+                    ? 'bg-pink-500/40 border-pink-400 text-pink-200'
+                    : 'bg-cyan-500/20 hover:bg-cyan-500/40 border-cyan-400/50 text-cyan-300'
+                }`}
+                title={layout.description}
+              >
+                {layout.name}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="border-t border-cyan-400/30 pt-3">
           <p className="text-cyan-400 font-bold mb-2">CAMERA PRESETS</p>
           <div className="grid grid-cols-2 gap-2">
@@ -394,6 +554,17 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
                 {preset.name}
               </button>
             ))}
+            <button
+              onClick={() => setAutoFlyby(prev => !prev)}
+              className={`px-2 py-1 border rounded text-[10px] font-bold transition-colors col-span-2 ${
+                autoFlyby
+                  ? 'bg-yellow-500/40 border-yellow-400 text-yellow-200 animate-pulse'
+                  : 'bg-cyan-500/20 hover:bg-cyan-500/40 border-cyan-400/50 text-cyan-300'
+              }`}
+              title={autoFlyby ? 'Stop automatic camera orbit' : 'Start automatic camera orbit'}
+            >
+              {autoFlyby ? '⏹️ Stop Flyby' : '🎥 Auto Flyby'}
+            </button>
           </div>
         </div>
       </div>
