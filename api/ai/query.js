@@ -19,16 +19,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userQuery, dashboardContext = {} } = req.body;
+    const { userQuery, dashboardContext = {}, aiProvider = 'openai' } = req.body;
     
     if (!userQuery) {
       return res.status(400).json({ error: 'Query is required' });
     }
 
-    console.log('Processing natural language query:', userQuery);
+    // Validate provider
+    const provider = ['openai', 'zai'].includes(aiProvider) ? aiProvider : 'openai';
+    console.log(`Processing query with ${provider}: ${userQuery}`);
 
     // Step 1: Convert natural language to SQL
-    const sqlQuery = await naturalLanguageToSQL(userQuery, dashboardContext);
+    const sqlQuery = await naturalLanguageToSQL(userQuery, dashboardContext, provider);
     console.log('Generated SQL:', sqlQuery);
 
     // Step 2: Validate SQL (basic security check)
@@ -63,25 +65,24 @@ export default async function handler(req, res) {
     }
 
     // Step 4: Generate human-readable explanation
-    const explanation = await explainResults(userQuery, sqlQuery, results, dashboardContext);
+    const explanation = await explainResults(userQuery, sqlQuery, results, dashboardContext, provider);
 
     res.status(200).json({
       query: userQuery,
       sqlQuery,
       results,
       explanation,
-      resultCount: results.length
+      resultCount: results.length,
+      provider
     });
 
   } catch (error) {
     console.error('AI query error:', error);
     
-    // Handle timeout errors specifically
     if (error.message?.includes('timed out') || error.message?.includes('timeout')) {
       return res.status(504).json({ 
         error: 'Request timed out',
-        details: error.message,
-        suggestion: 'The AI service is taking too long to respond. Please try a simpler query or try again later.'
+        details: error.message
       });
     }
     
@@ -92,8 +93,7 @@ export default async function handler(req, res) {
   }
 }
 
-// Vercel serverless function configuration
-// Note: Hobby plan has 10s timeout, Pro has 60s. This function may need Pro plan for complex queries.
+// Vercel serverless function configuration - increase timeout to 60s
 export const config = {
-  maxDuration: 30, // Maximum execution time in seconds (Vercel limit)
+  maxDuration: 60,
 };
