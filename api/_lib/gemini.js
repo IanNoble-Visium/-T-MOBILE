@@ -10,13 +10,26 @@ if (!googleApiKey) {
 }
 
 // Initialize Gemini AI (latest model) - only if API key exists
+// Valid Gemini model names: gemini-3-pro-preview, gemini-3-flash-preview, gemini-1.5-pro
 let genAI = null;
 let model = null;
+let modelName = null;
 
 if (googleApiKey) {
   try {
     genAI = new GoogleGenerativeAI(googleApiKey);
-    model = genAI.getGenerativeModel({ model: 'gemini-3-pro' });
+    // Try latest models first, fallback to stable models
+    const modelOptions = [
+      'gemini-3-pro-preview',  // Latest preview model
+      'gemini-3-flash-preview', // Fast preview model
+      'gemini-1.5-pro',         // Stable production model
+      'gemini-1.5-flash'        // Fast stable model
+    ];
+    
+    // Initialize with first available model (will be validated on first use)
+    modelName = modelOptions[0];
+    model = genAI.getGenerativeModel({ model: modelName });
+    console.log(`Initialized Gemini AI with model: ${modelName}`);
   } catch (initError) {
     console.error('Failed to initialize Gemini AI:', initError);
   }
@@ -38,32 +51,77 @@ export async function generateResponse(prompt, context = {}) {
     throw new Error(errorMsg);
   }
 
-  try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
-  } catch (error) {
-    // Log detailed error information
-    console.error('Gemini API error details:');
-    console.error('- Error message:', error.message);
-    console.error('- Error code:', error.code);
-    console.error('- Error status:', error.status);
-    console.error('- Full error:', JSON.stringify(error, null, 2));
-    
-    // Provide more specific error messages
-    if (error.message?.includes('API_KEY')) {
-      throw new Error('Invalid or missing Google API key. Please check your GOOGLE_API_KEY environment variable.');
+  // Try multiple models if the first one fails (model not found, etc.)
+  const modelOptions = [
+    'gemini-3-pro-preview',
+    'gemini-3-flash-preview',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash'
+  ];
+  
+  let lastError = null;
+  
+  for (const tryModelName of modelOptions) {
+    try {
+      // Get model instance (create new if different from current)
+      let modelToUse = model;
+      if (tryModelName !== modelName) {
+        modelToUse = genAI.getGenerativeModel({ model: tryModelName });
+        console.log(`Trying Gemini model: ${tryModelName}`);
+      }
+      
+      const result = await modelToUse.generateContent(prompt);
+      const response = await result.response;
+      
+      // Update global model reference if we successfully used a different model
+      if (tryModelName !== modelName) {
+        model = modelToUse;
+        modelName = tryModelName;
+        console.log(`Successfully using Gemini model: ${modelName}`);
+      }
+      
+      return response.text();
+    } catch (error) {
+      lastError = error;
+      
+      // If it's a "model not found" error, try next model
+      if (error.message?.includes('not found') || error.message?.includes('404')) {
+        console.warn(`Model ${tryModelName} not available, trying next option...`);
+        continue;
+      }
+      
+      // For other errors, log and break
+      console.error(`Gemini API error with model ${tryModelName}:`);
+      console.error('- Error message:', error.message);
+      console.error('- Error code:', error.code);
+      console.error('- Error status:', error.status);
+      
+      // If it's not a model-not-found error, don't try other models
+      if (!error.message?.includes('not found') && !error.message?.includes('404')) {
+        break;
+      }
     }
-    if (error.message?.includes('quota') || error.message?.includes('rate limit')) {
-      throw new Error('Gemini API quota exceeded or rate limited. Please try again later.');
-    }
-    if (error.message?.includes('safety')) {
-      throw new Error('Gemini API blocked the request due to safety filters. Please rephrase your query.');
-    }
-    
-    // Generic error with actual message
-    throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
   }
+  
+  // If we get here, all models failed
+  console.error('All Gemini models failed. Last error:', lastError);
+  
+  // Provide more specific error messages
+  if (lastError?.message?.includes('API_KEY')) {
+    throw new Error('Invalid or missing Google API key. Please check your GOOGLE_API_KEY environment variable.');
+  }
+  if (lastError?.message?.includes('quota') || lastError?.message?.includes('rate limit')) {
+    throw new Error('Gemini API quota exceeded or rate limited. Please try again later.');
+  }
+  if (lastError?.message?.includes('safety')) {
+    throw new Error('Gemini API blocked the request due to safety filters. Please rephrase your query.');
+  }
+  if (lastError?.message?.includes('not found') || lastError?.message?.includes('404')) {
+    throw new Error('No available Gemini models found. Please check your API access or try again later.');
+  }
+  
+  // Generic error with actual message
+  throw new Error(`Failed to generate AI response: ${lastError?.message || 'Unknown error'}`);
 }
 
 // Convert natural language to SQL query
