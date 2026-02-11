@@ -1,204 +1,7 @@
-import React, { useRef, useMemo, useState } from 'react'
-import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import * as THREE from 'three'
+import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react'
+import ForceGraph3D from 'react-force-graph-3d'
 import { NODE_TYPES } from '@/lib/networkDataset'
-
-// Enhanced camera controls hook with keyboard, mouse, and presets
-const useCameraControls = (targetPosition, animating) => {
-  const { camera, gl } = useThree()
-  const targetRef = useRef(new THREE.Vector3(0, 0, 0))
-  const panOffset = useRef(new THREE.Vector3(0, 0, 0))
-
-  React.useEffect(() => {
-    let isDragging = false
-    let isPanning = false
-    let previousMousePosition = { x: 0, y: 0 }
-
-    const handleMouseDown = (event) => {
-      if (event.button === 0) { // Left click - rotate
-        isDragging = true
-      } else if (event.button === 2) { // Right click - pan
-        isPanning = true
-      }
-      previousMousePosition = { x: event.clientX, y: event.clientY }
-      event.preventDefault()
-    }
-
-    const handleMouseMove = (event) => {
-      if (!isDragging && !isPanning) return
-
-      const deltaX = event.clientX - previousMousePosition.x
-      const deltaY = event.clientY - previousMousePosition.y
-
-      if (isDragging) {
-        // Rotate camera around target
-        const spherical = new THREE.Spherical()
-        spherical.setFromVector3(camera.position.clone().sub(targetRef.current))
-
-        spherical.theta -= deltaX * 0.01
-        spherical.phi += deltaY * 0.01
-
-        // Clamp phi to avoid flipping
-        spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi))
-
-        camera.position.setFromSpherical(spherical).add(targetRef.current)
-        camera.lookAt(targetRef.current)
-      } else if (isPanning) {
-        // Pan camera
-        const panSpeed = 0.02
-        const offset = new THREE.Vector3(-deltaX * panSpeed, deltaY * panSpeed, 0)
-        offset.applyQuaternion(camera.quaternion)
-
-        panOffset.current.add(offset)
-        targetRef.current.add(offset)
-        camera.position.add(offset)
-      }
-
-      previousMousePosition = { x: event.clientX, y: event.clientY }
-    }
-
-    const handleMouseUp = () => {
-      isDragging = false
-      isPanning = false
-    }
-
-    const handleWheel = (event) => {
-      event.preventDefault()
-      const zoomSpeed = 0.1
-      const direction = new THREE.Vector3().subVectors(camera.position, targetRef.current).normalize()
-      const distance = camera.position.distanceTo(targetRef.current)
-
-      const newDistance = Math.max(5, Math.min(100, distance + event.deltaY * zoomSpeed))
-      camera.position.copy(targetRef.current).add(direction.multiplyScalar(newDistance))
-    }
-
-    const handleContextMenu = (event) => {
-      event.preventDefault() // Prevent right-click menu
-    }
-
-    // Keyboard controls
-    const handleKeyDown = (event) => {
-      const moveSpeed = 0.5
-      const rotateSpeed = 0.1
-
-      switch(event.key.toLowerCase()) {
-        // WASD movement
-        case 'w':
-          camera.position.z -= moveSpeed
-          targetRef.current.z -= moveSpeed
-          break
-        case 's':
-          camera.position.z += moveSpeed
-          targetRef.current.z += moveSpeed
-          break
-        case 'a':
-          camera.position.x -= moveSpeed
-          targetRef.current.x -= moveSpeed
-          break
-        case 'd':
-          camera.position.x += moveSpeed
-          targetRef.current.x += moveSpeed
-          break
-
-        // Arrow keys - rotation
-        case 'arrowleft':
-          {
-            const spherical = new THREE.Spherical()
-            spherical.setFromVector3(camera.position.clone().sub(targetRef.current))
-            spherical.theta -= rotateSpeed
-            camera.position.setFromSpherical(spherical).add(targetRef.current)
-            camera.lookAt(targetRef.current)
-          }
-          break
-        case 'arrowright':
-          {
-            const spherical = new THREE.Spherical()
-            spherical.setFromVector3(camera.position.clone().sub(targetRef.current))
-            spherical.theta += rotateSpeed
-            camera.position.setFromSpherical(spherical).add(targetRef.current)
-            camera.lookAt(targetRef.current)
-          }
-          break
-        case 'arrowup':
-          {
-            const spherical = new THREE.Spherical()
-            spherical.setFromVector3(camera.position.clone().sub(targetRef.current))
-            spherical.phi = Math.max(0.1, spherical.phi - rotateSpeed)
-            camera.position.setFromSpherical(spherical).add(targetRef.current)
-            camera.lookAt(targetRef.current)
-          }
-          break
-        case 'arrowdown':
-          {
-            const spherical = new THREE.Spherical()
-            spherical.setFromVector3(camera.position.clone().sub(targetRef.current))
-            spherical.phi = Math.min(Math.PI - 0.1, spherical.phi + rotateSpeed)
-            camera.position.setFromSpherical(spherical).add(targetRef.current)
-            camera.lookAt(targetRef.current)
-          }
-          break
-
-        // +/- zoom
-        case '+':
-        case '=':
-          {
-            const direction = new THREE.Vector3().subVectors(camera.position, targetRef.current).normalize()
-            const distance = camera.position.distanceTo(targetRef.current)
-            const newDistance = Math.max(5, distance - 2)
-            camera.position.copy(targetRef.current).add(direction.multiplyScalar(newDistance))
-          }
-          break
-        case '-':
-        case '_':
-          {
-            const direction = new THREE.Vector3().subVectors(camera.position, targetRef.current).normalize()
-            const distance = camera.position.distanceTo(targetRef.current)
-            const newDistance = Math.min(100, distance + 2)
-            camera.position.copy(targetRef.current).add(direction.multiplyScalar(newDistance))
-          }
-          break
-      }
-    }
-
-    gl.domElement.addEventListener('mousedown', handleMouseDown)
-    gl.domElement.addEventListener('mousemove', handleMouseMove)
-    gl.domElement.addEventListener('mouseup', handleMouseUp)
-    gl.domElement.addEventListener('wheel', handleWheel)
-    gl.domElement.addEventListener('contextmenu', handleContextMenu)
-    window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      gl.domElement.removeEventListener('mousedown', handleMouseDown)
-      gl.domElement.removeEventListener('mousemove', handleMouseMove)
-      gl.domElement.removeEventListener('mouseup', handleMouseUp)
-      gl.domElement.removeEventListener('wheel', handleWheel)
-      gl.domElement.removeEventListener('contextmenu', handleContextMenu)
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [camera, gl])
-
-  // Smooth camera animation to target position
-  useFrame(() => {
-    if (animating && targetPosition) {
-      camera.position.lerp(targetPosition, 0.05)
-      camera.lookAt(targetRef.current)
-    }
-  })
-
-  return { targetRef, panOffset }
-}
-
-// Convert lat/lon to 3D coordinates on a sphere - LARGER RADIUS for better spread
-const latLonToVector3 = (lat, lon, radius = 12) => {
-  const phi = (90 - lat) * (Math.PI / 180)
-  const theta = (lon + 180) * (Math.PI / 180)
-
-  const x = -(radius * Math.sin(phi) * Math.cos(theta))
-  const z = radius * Math.sin(phi) * Math.sin(theta)
-  const y = radius * Math.cos(phi)
-
-  return new THREE.Vector3(x, y, z)
-}
+import * as THREE from 'three'
 
 // Regional colors for cyberpunk theme
 const REGION_COLORS = {
@@ -210,247 +13,131 @@ const REGION_COLORS = {
   Southeast: '#00FF00' // Lime green
 }
 
-// Node component with glowing effect and selection
-const NetworkNode = ({ node, onHover, onLeave, onClick, isSelected }) => {
-  const meshRef = useRef()
-  const glowRef = useRef()
-  const ringRef = useRef()
-
-  const position = useMemo(() => latLonToVector3(node.location.lat, node.location.lon), [node.location])
-
-  const nodeColor = NODE_TYPES[node.type]?.color || '#FFFFFF'
-  const regionColor = REGION_COLORS[node.region] || '#FFFFFF'
-
-  useFrame((state) => {
-    if (meshRef.current) {
-      // Subtle pulsing animation
-      const pulse = Math.sin(state.clock.elapsedTime * 2) * 0.1 + 0.9
-      meshRef.current.scale.setScalar(pulse)
-    }
-    if (glowRef.current) {
-      // Glow pulsing
-      const glowPulse = Math.sin(state.clock.elapsedTime * 3) * 0.3 + 0.7
-      glowRef.current.material.opacity = glowPulse * 0.6
-    }
-    if (ringRef.current && isSelected) {
-      // Rotate selection ring
-      ringRef.current.rotation.z += 0.02
-    }
-  })
-
-  return (
-    <group position={position}>
-      {/* Main node sphere - metallic - LARGER */}
-      <mesh
-        ref={meshRef}
-        onPointerOver={() => onHover(node)}
-        onPointerOut={onLeave}
-        onClick={() => onClick(node)}
-      >
-        <sphereGeometry args={[0.25, 16, 16]} />
-        <meshStandardMaterial
-          color={nodeColor}
-          emissive={nodeColor}
-          emissiveIntensity={0.5}
-          metalness={0.8}
-          roughness={0.2}
-        />
-      </mesh>
-
-      {/* Glowing aura - LARGER */}
-      <mesh ref={glowRef}>
-        <sphereGeometry args={[0.4, 16, 16]} />
-        <meshBasicMaterial
-          color={regionColor}
-          transparent
-          opacity={0.6}
-          side={THREE.BackSide}
-        />
-      </mesh>
-
-      {/* Selection ring - LARGER */}
-      {isSelected && (
-        <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
-          <torusGeometry args={[0.5, 0.04, 8, 32]} />
-          <meshBasicMaterial
-            color="#00FFFF"
-            emissive="#00FFFF"
-            emissiveIntensity={1}
-          />
-        </mesh>
-      )}
-    </group>
-  )
-}
-
-// Connection line component with pulsating effect
-const NetworkConnection = ({ edge, nodes }) => {
-  const lineRef = useRef()
-
-  const sourceNode = nodes.find(n => n.id === edge.source)
-  const targetNode = nodes.find(n => n.id === edge.target)
-
-  const geometry = useMemo(() => {
-    if (!sourceNode || !targetNode) return null
-
-    const start = latLonToVector3(sourceNode.location.lat, sourceNode.location.lon)
-    const end = latLonToVector3(targetNode.location.lat, targetNode.location.lon)
-
-    const points = [start, end]
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    return geometry
-  }, [sourceNode, targetNode])
-
-  useFrame((state) => {
-    if (lineRef.current) {
-      // Pulsating opacity animation
-      const pulse = Math.sin(state.clock.elapsedTime * 4 + Math.random() * Math.PI) * 0.3 + 0.7
-      lineRef.current.material.opacity = pulse
-    }
-  })
-
-  if (!geometry) return null
-
-  return (
-    <line ref={lineRef} geometry={geometry}>
-      <lineBasicMaterial
-        color="#00FFFF"
-        transparent
-        opacity={0.8}
-      />
-    </line>
-  )
-}
-
-// Data flow effect - simplified pulsing connections - LARGER
-const DataFlowEffect = ({ edges, nodes }) => {
-  return (
-    <group>
-      {edges.slice(0, 10).map((edge) => { // Limit for performance
-        const sourceNode = nodes.find(n => n.id === edge.source)
-        const targetNode = nodes.find(n => n.id === edge.target)
-        if (!sourceNode || !targetNode) return null
-
-        const start = latLonToVector3(sourceNode.location.lat, sourceNode.location.lon)
-        const end = latLonToVector3(targetNode.location.lat, targetNode.location.lon)
-        const midPoint = start.clone().lerp(end, 0.5)
-
-        return (
-          <mesh key={`flow-${edge.id}`} position={midPoint}>
-            <sphereGeometry args={[0.06, 8, 8]} />
-            <meshBasicMaterial
-              color="#FFFF00"
-              transparent
-              opacity={0.8}
-            />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-// Camera preset positions - Optimized for larger sphere
+// Camera preset positions
 const CAMERA_PRESETS = {
-  default: { position: new THREE.Vector3(0, 0, 18), name: 'Default' },
-  top: { position: new THREE.Vector3(0, 25, 0), name: 'Top View' },
-  front: { position: new THREE.Vector3(0, 0, 25), name: 'Front View' },
-  side: { position: new THREE.Vector3(25, 0, 0), name: 'Side View' },
-  dynamic: { position: new THREE.Vector3(15, 15, 15), name: 'Dynamic' }
+  default: { position: { x: 0, y: 0, z: 200 }, name: 'Default' },
+  top: { position: { x: 0, y: 300, z: 0 }, name: 'Top View' },
+  front: { position: { x: 0, y: 0, z: 300 }, name: 'Front View' },
+  side: { position: { x: 300, y: 0, z: 0 }, name: 'Side View' },
+  dynamic: { position: { x: 200, y: 200, z: 200 }, name: 'Dynamic' }
 }
 
-// Scene component that renders inside Canvas
-const Scene = ({ nodes, edges, onNodeHover, onNodeLeave, onNodeClick, selectedNodeId, cameraTarget, isAnimating }) => {
-  // Use custom camera controls inside Canvas
-  useCameraControls(cameraTarget, isAnimating)
-
-  return (
-    <>
-      {/* Enhanced multi-point lighting system */}
-      <ambientLight intensity={0.3} />
-      <hemisphereLight intensity={0.2} groundColor="#000000" />
-      <directionalLight position={[10, 10, 10]} intensity={0.5} color="#FFFFFF" />
-      <pointLight position={[10, 10, 10]} intensity={0.5} color="#00FFFF" />
-      <pointLight position={[-10, -10, -10]} intensity={0.3} color="#FF0080" />
-      <pointLight position={[0, 15, 0]} intensity={0.4} color="#FFFF00" />
-      <spotLight position={[0, 20, 0]} angle={0.3} intensity={0.5} color="#FFFFFF" />
-
-      {/* Render connections first (behind nodes) */}
-      {edges.map(edge => (
-        <NetworkConnection
-          key={edge.id}
-          edge={edge}
-          nodes={nodes}
-        />
-      ))}
-
-      {/* Render nodes */}
-      {nodes.map(node => (
-        <NetworkNode
-          key={node.id}
-          node={node}
-          onHover={onNodeHover}
-          onLeave={onNodeLeave}
-          onClick={onNodeClick}
-          isSelected={node.id === selectedNodeId}
-        />
-      ))}
-
-      {/* Data flow effect */}
-      <DataFlowEffect edges={edges} nodes={nodes} />
-    </>
-  )
-}
-
-// Main 3D Network Topology Component
-const NetworkTopology3D = ({ nodes, edges }) => {
+/**
+ * Enhanced 3D Network Topology Component using 3d-force-graph
+ * Provides superior performance and visual quality compared to custom Three.js implementation
+ */
+const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave, selectedNodeId, alarmedNodeIds = [] }) => {
+  const fgRef = useRef()
   const [hoveredNode, setHoveredNode] = useState(null)
   const [selectedNode, setSelectedNode] = useState(null)
-  const [cameraTarget, setCameraTarget] = useState(null)
-  const [isAnimating, setIsAnimating] = useState(false)
   const [isFullscreen, setIsFullscreen] = useState(false)
   const containerRef = useRef(null)
 
-  const handleNodeHover = (node) => {
-    setHoveredNode(node)
-  }
+  // Transform nodes and edges to 3d-force-graph format
+  const graphData = useMemo(() => {
+    // Convert nodes - add visual properties
+    const graphNodes = nodes.map(node => {
+      const nodeColor = NODE_TYPES[node.type]?.color || '#FFFFFF'
+      const regionColor = REGION_COLORS[node.region] || '#FFFFFF'
+      const isAlarmed = alarmedNodeIds.includes(node.id)
+      const isSelected = selectedNodeId === node.id
 
-  const handleNodeLeave = () => {
-    setHoveredNode(null)
-  }
+      return {
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        region: node.region,
+        status: node.status,
+        capacity: node.capacity,
+        location: node.location,
+        // Visual properties
+        color: isSelected ? '#E20074' : isAlarmed ? '#E4002B' : nodeColor,
+        regionColor,
+        val: Math.max(3, Math.min(15, (node.capacity || 1000) / 100)), // Node size based on capacity
+        isAlarmed,
+        isSelected
+      }
+    })
 
-  const handleNodeClick = (node) => {
+    // Convert edges - ensure source/target are node IDs
+    const graphLinks = edges.map(edge => {
+      const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source
+      const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target
+      
+      return {
+        source: sourceId,
+        target: targetId,
+        id: edge.id,
+        bandwidth: edge.bandwidth,
+        latency: edge.latency,
+        utilization: edge.utilization,
+        // Visual properties
+        color: edge.utilization > 70 ? '#E4002B' : edge.utilization > 40 ? '#FFB81C' : '#00A651',
+        width: Math.max(1, Math.min(5, (edge.bandwidth || 10) / 20))
+      }
+    })
+
+    return { nodes: graphNodes, links: graphLinks }
+  }, [nodes, edges, alarmedNodeIds, selectedNodeId])
+
+  // Handle node click
+  const handleNodeClick = useCallback((node) => {
     setSelectedNode(node)
-    // Animate camera to focus on selected node
-    const nodePosition = latLonToVector3(node.location.lat, node.location.lon)
-    const cameraPos = nodePosition.clone().add(new THREE.Vector3(2, 2, 2))
-    setCameraTarget(cameraPos)
-    setIsAnimating(true)
+    if (onNodeClick) {
+      onNodeClick(node)
+    }
+    
+    // Focus camera on clicked node
+    if (fgRef.current) {
+      const distance = 100
+      const distRatio = 1 + distance / Math.hypot(node.x, node.y, node.z)
+      
+      fgRef.current.cameraPosition(
+        {
+          x: node.x * distRatio,
+          y: node.y * distRatio,
+          z: node.z * distRatio
+        },
+        node,
+        3000 // Animation duration
+      )
+    }
+  }, [onNodeClick])
 
-    setTimeout(() => {
-      setIsAnimating(false)
-      setCameraTarget(null)
-    }, 1500)
-  }
+  // Handle node hover
+  const handleNodeHover = useCallback((node) => {
+    setHoveredNode(node)
+    if (onNodeHover) {
+      onNodeHover(node)
+    }
+  }, [onNodeHover])
 
-  const handleCameraPreset = (presetKey) => {
+  // Handle node leave
+  const handleNodeLeave = useCallback(() => {
+    setHoveredNode(null)
+    if (onNodeLeave) {
+      onNodeLeave()
+    }
+  }, [onNodeLeave])
+
+  // Camera preset handler
+  const handleCameraPreset = useCallback((presetKey) => {
+    if (!fgRef.current) return
+    
     const preset = CAMERA_PRESETS[presetKey]
-    setCameraTarget(preset.position.clone())
-    setIsAnimating(true)
+    fgRef.current.cameraPosition(preset.position, { x: 0, y: 0, z: 0 }, 2000)
+  }, [])
 
-    setTimeout(() => {
-      setIsAnimating(false)
-      setCameraTarget(null)
-    }, 1500)
-  }
+  // Fullscreen toggle
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return
 
-  const toggleFullscreen = () => {
     if (!isFullscreen) {
-      if (containerRef.current?.requestFullscreen) {
+      if (containerRef.current.requestFullscreen) {
         containerRef.current.requestFullscreen()
-      } else if (containerRef.current?.webkitRequestFullscreen) {
+      } else if (containerRef.current.webkitRequestFullscreen) {
         containerRef.current.webkitRequestFullscreen()
-      } else if (containerRef.current?.msRequestFullscreen) {
+      } else if (containerRef.current.msRequestFullscreen) {
         containerRef.current.msRequestFullscreen()
       }
       setIsFullscreen(true)
@@ -464,10 +151,10 @@ const NetworkTopology3D = ({ nodes, edges }) => {
       }
       setIsFullscreen(false)
     }
-  }
+  }, [isFullscreen])
 
   // Listen for fullscreen changes
-  React.useEffect(() => {
+  useEffect(() => {
     const handleFullscreenChange = () => {
       setIsFullscreen(!!document.fullscreenElement)
     }
@@ -483,23 +170,102 @@ const NetworkTopology3D = ({ nodes, edges }) => {
     }
   }, [])
 
+  // Custom node 3D object - enhanced sphere with glow
+  const nodeThreeObject = useCallback((node) => {
+    const sprite = new THREE.TextureLoader().load('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')
+    const material = new THREE.SpriteMaterial({ map: sprite })
+    const spriteObj = new THREE.Sprite(material)
+    
+    // Create a more sophisticated 3D node
+    const group = new THREE.Group()
+    
+    // Main sphere
+    const geometry = new THREE.SphereGeometry(node.val / 2, 16, 16)
+    const nodeMaterial = new THREE.MeshPhongMaterial({
+      color: node.color,
+      emissive: node.color,
+      emissiveIntensity: 0.5,
+      shininess: 100,
+      transparent: true,
+      opacity: 0.9
+    })
+    const sphere = new THREE.Mesh(geometry, nodeMaterial)
+    group.add(sphere)
+    
+    // Glow effect for alarmed nodes
+    if (node.isAlarmed) {
+      const glowGeometry = new THREE.SphereGeometry(node.val / 2 + 2, 16, 16)
+      const glowMaterial = new THREE.MeshBasicMaterial({
+        color: '#E4002B',
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.BackSide
+      })
+      const glow = new THREE.Mesh(glowGeometry, glowMaterial)
+      group.add(glow)
+    }
+    
+    // Selection ring
+    if (node.isSelected) {
+      const ringGeometry = new THREE.TorusGeometry(node.val / 2 + 3, 1, 8, 32)
+      const ringMaterial = new THREE.MeshBasicMaterial({
+        color: '#E20074',
+        emissive: '#E20074',
+        emissiveIntensity: 1
+      })
+      const ring = new THREE.Mesh(ringGeometry, ringMaterial)
+      ring.rotation.x = Math.PI / 2
+      group.add(ring)
+    }
+    
+    return group
+  }, [])
+
+  // Custom link styling
+  const linkColor = useCallback((link) => link.color || '#00FFFF')
+  const linkWidth = useCallback((link) => link.width || 1)
+
   return (
-    <div ref={containerRef} className="w-full h-full relative">
-      <Canvas
-        camera={{ position: [0, 0, 18], fov: 75 }}
-        style={{ background: 'radial-gradient(circle, #0a0a0a 0%, #000000 100%)' }}
-      >
-        <Scene
-          nodes={nodes}
-          edges={edges}
-          onNodeHover={handleNodeHover}
-          onNodeLeave={handleNodeLeave}
-          onNodeClick={handleNodeClick}
-          selectedNodeId={selectedNode?.id}
-          cameraTarget={cameraTarget}
-          isAnimating={isAnimating}
-        />
-      </Canvas>
+    <div ref={containerRef} className="w-full h-full relative bg-black">
+      <ForceGraph3D
+        ref={fgRef}
+        graphData={graphData}
+        nodeLabel={(node) => `${node.name}\n${NODE_TYPES[node.type]?.label || node.type}\n${node.region}`}
+        nodeColor={(node) => node.color}
+        nodeVal={(node) => node.val}
+        nodeThreeObject={nodeThreeObject}
+        nodeThreeObjectExtend={true}
+        linkLabel={(link) => `${link.bandwidth || 'N/A'} Gbps | ${link.latency || 'N/A'}ms | ${link.utilization || 0}%`}
+        linkColor={linkColor}
+        linkWidth={linkWidth}
+        linkOpacity={0.6}
+        linkDirectionalArrowLength={3}
+        linkDirectionalArrowRelPos={1}
+        linkDirectionalArrowColor={(link) => link.color}
+        onNodeClick={handleNodeClick}
+        onNodeHover={handleNodeHover}
+        onNodeDragEnd={(node) => {
+          node.fx = node.x
+          node.fy = node.y
+          node.fz = node.z
+        }}
+        onBackgroundClick={() => {
+          setSelectedNode(null)
+          setHoveredNode(null)
+        }}
+        showNavInfo={false}
+        backgroundColor="#000000"
+        // Force-directed layout settings
+        cooldownTicks={100}
+        onEngineStop={() => fgRef.current?.zoomToFit(400)}
+        // Camera settings
+        cameraPosition={{ x: 0, y: 0, z: 200 }}
+        // Performance optimizations
+        numDimensions={3}
+        d3AlphaDecay={0.0228}
+        d3VelocityDecay={0.4}
+        warmupTicks={0}
+      />
 
       {/* Fullscreen Button */}
       <button
@@ -519,15 +285,14 @@ const NetworkTopology3D = ({ nodes, edges }) => {
       </button>
 
       {/* Control Panel - Top Left */}
-      <div className="absolute top-4 left-4 bg-black/90 border border-cyan-400 p-4 rounded-lg text-white font-mono text-xs max-w-xs">
+      <div className="absolute top-4 left-4 bg-black/90 border border-cyan-400 p-4 rounded-lg text-white font-mono text-xs max-w-xs z-10">
         <h3 className="text-cyan-400 font-bold mb-3">3D CONTROLS</h3>
         <div className="space-y-2 mb-4 text-gray-300">
           <p>🖱️ Left-drag: Rotate</p>
           <p>🖱️ Right-drag: Pan</p>
           <p>🖱️ Scroll: Zoom</p>
-          <p>⌨️ WASD: Move camera</p>
-          <p>⌨️ Arrows: Rotate view</p>
-          <p>⌨️ +/- : Zoom in/out</p>
+          <p>🖱️ Drag node: Move</p>
+          <p>🖱️ Click node: Select</p>
         </div>
         <div className="border-t border-cyan-400/30 pt-3">
           <p className="text-cyan-400 font-bold mb-2">CAMERA PRESETS</p>
@@ -547,25 +312,33 @@ const NetworkTopology3D = ({ nodes, edges }) => {
 
       {/* Hover Tooltip - Top Right */}
       {hoveredNode && (
-        <div className="absolute top-4 right-4 bg-black/90 border border-cyan-400 p-4 rounded-lg text-white font-mono text-sm max-w-xs">
+        <div className="absolute top-4 right-4 bg-black/90 border border-cyan-400 p-4 rounded-lg text-white font-mono text-sm max-w-xs z-10">
           <h3 className="text-cyan-400 font-bold mb-2">{hoveredNode.name}</h3>
           <div className="space-y-1">
             <p><span className="text-gray-400">Type:</span> {NODE_TYPES[hoveredNode.type]?.label}</p>
             <p><span className="text-gray-400">Region:</span> {hoveredNode.region}</p>
             <p><span className="text-gray-400">Status:</span> <span className="text-green-400">{hoveredNode.status}</span></p>
             <p><span className="text-gray-400">Capacity:</span> {hoveredNode.capacity?.toLocaleString()}</p>
-            <p><span className="text-gray-400">Location:</span> {hoveredNode.location.city}</p>
+            <p><span className="text-gray-400">Location:</span> {hoveredNode.location?.city}</p>
+            {hoveredNode.isAlarmed && (
+              <p className="text-red-400 font-semibold">⚠️ Active Alarms</p>
+            )}
           </div>
         </div>
       )}
 
       {/* Selection Panel - Bottom Left */}
       {selectedNode && (
-        <div className="absolute bottom-4 left-4 bg-black/90 border border-pink-400 p-4 rounded-lg text-white font-mono text-sm max-w-sm">
+        <div className="absolute bottom-4 left-4 bg-black/90 border border-pink-400 p-4 rounded-lg text-white font-mono text-sm max-w-sm z-10">
           <div className="flex items-start justify-between mb-2">
             <h3 className="text-pink-400 font-bold">SELECTED NODE</h3>
             <button
-              onClick={() => setSelectedNode(null)}
+              onClick={() => {
+                setSelectedNode(null)
+                if (fgRef.current) {
+                  fgRef.current.cameraPosition({ x: 0, y: 0, z: 200 }, { x: 0, y: 0, z: 0 }, 2000)
+                }
+              }}
               className="text-gray-400 hover:text-white transition-colors"
             >
               ✕
@@ -578,14 +351,21 @@ const NetworkTopology3D = ({ nodes, edges }) => {
             <p><span className="text-gray-400">Region:</span> {selectedNode.region}</p>
             <p><span className="text-gray-400">Status:</span> <span className="text-green-400">{selectedNode.status}</span></p>
             <p><span className="text-gray-400">Capacity:</span> {selectedNode.capacity?.toLocaleString()}</p>
-            <p><span className="text-gray-400">Location:</span> {selectedNode.location.city}, {selectedNode.location.state}</p>
-            <p><span className="text-gray-400">Coordinates:</span> {selectedNode.location.lat.toFixed(2)}, {selectedNode.location.lon.toFixed(2)}</p>
+            {selectedNode.location && (
+              <>
+                <p><span className="text-gray-400">Location:</span> {selectedNode.location.city}, {selectedNode.location.state}</p>
+                <p><span className="text-gray-400">Coordinates:</span> {selectedNode.location.lat?.toFixed(2)}, {selectedNode.location.lon?.toFixed(2)}</p>
+              </>
+            )}
+            {selectedNode.isAlarmed && (
+              <p className="text-red-400 font-semibold">⚠️ Active Alarms</p>
+            )}
           </div>
         </div>
       )}
 
       {/* Stats Overlay - Bottom Right */}
-      <div className="absolute bottom-4 right-4 bg-black/80 border border-pink-400 p-3 rounded text-white font-mono text-xs">
+      <div className="absolute bottom-4 right-4 bg-black/80 border border-pink-400 p-3 rounded text-white font-mono text-xs z-10">
         <div className="grid grid-cols-2 gap-2">
           <div>NODES: {nodes.length}</div>
           <div>EDGES: {edges.length}</div>
@@ -595,7 +375,7 @@ const NetworkTopology3D = ({ nodes, edges }) => {
       </div>
 
       {/* Camera Indicator */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 pointer-events-none z-10">
         <div className="bg-black/70 border border-yellow-400 px-3 py-1 rounded-full text-yellow-400 font-mono text-xs">
           🎮 Interactive 3D View
         </div>

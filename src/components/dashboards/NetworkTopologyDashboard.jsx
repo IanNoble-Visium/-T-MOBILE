@@ -267,6 +267,12 @@ const NetworkTopologyDashboard = () => {
             <NetworkTopology3D
               nodes={filteredNodes}
               edges={filteredEdges}
+              onNodeClick={(node) => {
+                const fullNode = getNode(node.id)
+                if (fullNode) setSelectedNode(fullNode)
+              }}
+              selectedNodeId={selectedNode?.id}
+              alarmedNodeIds={getAlarmedNodesFromAlarms()}
             />
           </div>
         ) : (
