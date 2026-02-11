@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // ZAI API Configuration
-const ZAI_API_URL = 'https://api.z.ai/api/paas/v4/chat/completions';
+// Using Coding Plan endpoint (required for GLM Coding Max Yearly Plan)
+const ZAI_API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
 const ZAI_MODEL = 'glm-4.7'; // Latest GLM 4.7 model from ZAI
 
 // Generate response from ZAI API (GLM-4.7)
@@ -30,7 +31,8 @@ export async function generateResponse(prompt, context = {}) {
           }
         ],
         temperature: 0.7,
-        max_tokens: 2000
+        max_tokens: 2000,
+        stream: false
       })
     });
 
