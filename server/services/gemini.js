@@ -8,6 +8,7 @@ const ZAI_API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
 const ZAI_MODEL = 'glm-4.7'; // Latest GLM 4.7 model from ZAI
 
 // Generate response from ZAI API (GLM-4.7)
+// Includes timeout handling to prevent Vercel 504 errors (30s limit)
 export async function generateResponse(prompt, context = {}) {
   const zaiApiKey = process.env.ZAI_API_KEY;
   
@@ -15,7 +16,13 @@ export async function generateResponse(prompt, context = {}) {
     throw new Error('ZAI_API_KEY environment variable is not configured. Please set it in your environment variables.');
   }
 
+  // Timeout wrapper: 25 seconds to stay under Vercel's 30s limit
+  const TIMEOUT_MS = 25000;
+  
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    
     const response = await fetch(ZAI_API_URL, {
       method: 'POST',
       headers: {
@@ -31,10 +38,13 @@ export async function generateResponse(prompt, context = {}) {
           }
         ],
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 1000, // Reduced from 2000 to speed up responses
         stream: false
-      })
+      }),
+      signal: controller.signal
     });
+    
+    clearTimeout(timeoutId);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -61,6 +71,12 @@ export async function generateResponse(prompt, context = {}) {
     
     return content;
   } catch (error) {
+    // Handle timeout/abort errors
+    if (error.name === 'AbortError' || error.message?.includes('aborted') || error.message?.includes('timeout')) {
+      console.error('ZAI API request timed out after 25 seconds');
+      throw new Error('Request timed out. The AI service is taking too long to respond. Please try a simpler query or try again later.');
+    }
+    
     console.error('ZAI API error:', error);
     throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
   }
@@ -80,21 +96,13 @@ Database Schema:
 
   const contextInfo = dashboardContext.summary ? `\nCurrent Dashboard Context:\n${dashboardContext.summary}` : '';
 
-  const prompt = `You are a PostgreSQL expert. Convert this natural language query into a safe, read-only SQL query.
+  const prompt = `PostgreSQL expert. Convert to SQL (SELECT only):
 
 ${schemaContext}${contextInfo}
 
-User Query: "${userQuery}"
+Query: "${userQuery}"
 
-Rules:
-1. Only SELECT statements allowed (no INSERT, UPDATE, DELETE, DROP)
-2. Use proper JOIN syntax when querying multiple tables
-3. Add LIMIT clauses to prevent excessive results (max 100 rows unless specifically requested)
-4. Use aggregate functions (COUNT, AVG, SUM) when appropriate
-5. Format timestamps properly
-6. Return only the SQL query without explanation
-
-SQL Query:`;
+Rules: SELECT only, use JOINs, add LIMIT 100, use aggregates when needed. Return SQL only:`;
 
   const sqlQuery = await generateResponse(prompt);
   return sqlQuery.trim().replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
@@ -104,28 +112,14 @@ SQL Query:`;
 export async function explainResults(userQuery, sqlQuery, results, dashboardContext = {}) {
   const contextInfo = dashboardContext.summary ? `\nDashboard Context: ${dashboardContext.summary}` : '';
   
-  const prompt = `You are a cybersecurity analyst. Explain these database query results in a clear, actionable way.
+  const prompt = `Cybersecurity analyst. Explain query results concisely:
 
-User asked: "${userQuery}"
+User: "${userQuery}"
 ${contextInfo}
+SQL: ${sqlQuery}
+Results: ${JSON.stringify(results.slice(0, 5))} ${results.length > 5 ? `(+${results.length - 5} more)` : ''}
 
-SQL executed: ${sqlQuery}
-
-Results: ${JSON.stringify(results.slice(0, 10))} ${results.length > 10 ? `... and ${results.length - 10} more rows` : ''}
-
-Provide a concise, professional explanation that:
-1. Directly answers the user's question
-2. Highlights key insights and trends
-3. Notes any security concerns or anomalies
-4. Suggests actionable next steps if relevant - IMPORTANT: For each actionable next step, include a confidence percentage (0-100%) based on the evidence in the data
-   - 90-100%: Strong evidence directly from the query results
-   - 75-89%: Good evidence with reasonable inferences
-   - 60-74%: Moderate evidence, some assumptions required
-   - Below 60%: Speculative or based on general best practices rather than specific data
-   Format each step as: "**[Step Name] (Confidence: XX%):** Description"
-5. Uses clear language without SQL jargon
-
-Keep the response under 300 words.`;
+Answer: 1) Direct answer, 2) Key insights, 3) Security concerns, 4) Actionable steps with confidence % (90-100%: strong evidence, 75-89%: good evidence, 60-74%: moderate, <60%: speculative). Format steps as "**[Name] (XX%):** Description". Under 200 words.`;
 
   return await generateResponse(prompt);
 }

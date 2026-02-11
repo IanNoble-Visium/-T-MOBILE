@@ -75,9 +75,25 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('AI query error:', error);
+    
+    // Handle timeout errors specifically
+    if (error.message?.includes('timed out') || error.message?.includes('timeout')) {
+      return res.status(504).json({ 
+        error: 'Request timed out',
+        details: error.message,
+        suggestion: 'The AI service is taking too long to respond. Please try a simpler query or try again later.'
+      });
+    }
+    
     res.status(500).json({ 
       error: 'Failed to process query',
       details: error.message 
     });
   }
 }
+
+// Vercel serverless function configuration
+// Note: Hobby plan has 10s timeout, Pro has 60s. This function may need Pro plan for complex queries.
+export const config = {
+  maxDuration: 30, // Maximum execution time in seconds (Vercel limit)
+};
