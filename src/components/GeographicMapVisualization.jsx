@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Tooltip } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMap, Polyline, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { NODE_TYPES } from '@/lib/networkDataset'
@@ -120,28 +120,19 @@ const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick, onNodeRightClick
       position={[node.location.lat, node.location.lon]}
       icon={icon}
       eventHandlers={{
-        click: () => onNodeClick?.(node),
+        click: (e) => {
+          // Prevent default Leaflet popup from opening
+          e.originalEvent.stopPropagation()
+          onNodeClick?.(node)
+        },
         contextmenu: (e) => {
           e.originalEvent.preventDefault()
           e.originalEvent.stopPropagation()
           onNodeRightClick?.(node)
         }
       }}
-    >
-      <Popup>
-        <div className="text-sm">
-          <p className="font-bold">{node.name}</p>
-          <p className="text-xs text-gray-600">{typeInfo?.label}</p>
-          <p className="text-xs text-gray-600">{node.location.city || 'Unknown'}</p>
-          <p className="text-xs text-gray-600">
-            {(node.location.lat || 0).toFixed(4)}, {(node.location.lon || 0).toFixed(4)}
-          </p>
-          {isAlarmed && (
-            <p className="text-xs text-red-600 font-semibold mt-1">⚠️ Active Alarms</p>
-          )}
-        </div>
-      </Popup>
-    </Marker>
+      // Disable default popup behavior - we use NetworkNodeDetail modal instead
+    />
   )
 }
 
