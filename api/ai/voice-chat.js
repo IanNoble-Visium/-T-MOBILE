@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 /**
  * Voice Chat Endpoint
- * Handles conversational AI for voice interactions using GPT-5.2 Pro
+ * Handles conversational AI for voice using latest OpenAI chat models (gpt-5.2-chat-latest, with fallbacks).
  * 
  * POST /api/ai/voice-chat
  * Body: {
@@ -73,19 +73,33 @@ export default async function handler(req, res) {
       ...messages
     ];
 
-    console.log('Sending voice chat request to OpenAI GPT-5.2 Pro...');
+    console.log('Sending voice chat request to OpenAI...');
     console.log('Message count:', messages.length);
 
-    // Call OpenAI GPT-5.2 Pro for conversational response
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-5.2-pro',
-      messages: openaiMessages,
-      temperature: 0.7,
-      max_tokens: 500, // Keep responses concise for voice
-      top_p: 1,
-      frequency_penalty: 0,
-      presence_penalty: 0,
-    });
+    // Use latest chat models (v1/chat/completions). Try newest first, fallback for older accounts.
+    const chatModels = ['gpt-5.2-chat-latest', 'gpt-5.1-chat-latest', 'gpt-4o', 'gpt-3.5-turbo'];
+    let completion = null;
+    let modelUsed = null;
+
+    for (const model of chatModels) {
+      try {
+        completion = await openai.chat.completions.create({
+          model,
+          messages: openaiMessages,
+          temperature: 0.7,
+          max_tokens: 500, // Keep responses concise for voice
+          top_p: 1,
+          frequency_penalty: 0,
+          presence_penalty: 0,
+        });
+        modelUsed = model;
+        console.log(`Voice chat using model: ${model}`);
+        break;
+      } catch (err) {
+        console.warn(`Model ${model} failed:`, err.message);
+        if (model === chatModels[chatModels.length - 1]) throw err;
+      }
+    }
 
     const assistantMessage = completion.choices[0].message.content;
 

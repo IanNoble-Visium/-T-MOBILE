@@ -322,7 +322,7 @@ Guidelines:
 
     // Try multiple model names for compatibility
     let completion;
-    const modelOptions = ['gpt-5.2-pro', 'gpt-5.2-codex', 'gpt-4o', 'gpt-3.5-turbo'];
+    const modelOptions = ['gpt-5.2-chat-latest', 'gpt-5.1-chat-latest', 'gpt-4o', 'gpt-3.5-turbo'];
     let modelUsed = null;
 
     for (const model of modelOptions) {
