@@ -95,7 +95,7 @@ Click: "Sign In"
    - Enter description: "Test agent for demo"
    - Click "Next"
 4. Verify Step 2 (Model Selection):
-   - ✅ Model dropdown shows options (GPT-4, Claude, Gemini, etc.)
+   - ✅ Model dropdown shows options (GPT-5.2 Pro, Claude, Gemini 3 Pro, etc.)
    - ✅ Select a model
    - Click "Next"
 5. Continue through remaining steps:

@@ -13,7 +13,7 @@ console.log('API Key (first 20 chars):', process.env.OPENAI_API_KEY?.substring(0
 
 // Test available models
 async function testModels() {
-  const modelsToTry = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
+  const modelsToTry = ['gpt-5.2-pro', 'gpt-5.2-codex', 'gpt-4o', 'gpt-3.5-turbo'];
   
   for (const model of modelsToTry) {
     try {

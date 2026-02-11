@@ -9,14 +9,13 @@ const randomDate = (daysAgo) => {
   return date;
 };
 
-// AI Models
+// AI Models (current equivalents; legacy IDs supported as fallbacks elsewhere)
 const aiModels = [
-  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', cost: 0.03 },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'OpenAI', cost: 0.01 },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', cost: 0.015 },
-  { id: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', cost: 0.003 },
-  { id: 'gemini-pro', name: 'Gemini Pro', provider: 'Google', cost: 0.00025 },
-  { id: 'gemini-ultra', name: 'Gemini Ultra', provider: 'Google', cost: 0.001 }
+  { id: 'gpt-5.2-pro', name: 'GPT-5.2 Pro', provider: 'OpenAI', cost: 0.012 },
+  { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', provider: 'OpenAI', cost: 0.015 },
+  { id: 'claude-opus-4.6', name: 'Claude Opus 4.6', provider: 'Anthropic', cost: 0.012 },
+  { id: 'gemini-3-pro', name: 'Gemini 3 Pro', provider: 'Google', cost: 0.0005 },
+  { id: 'grok-4.1-fast', name: 'Grok 4.1 Fast', provider: 'xAI', cost: 0.0005 }
 ];
 
 // Agent types and roles
@@ -208,7 +207,7 @@ export const generateConversation = (agentId) => {
   
   const systemMessages = [
     'Agent initialized successfully',
-    'Model updated to GPT-4 Turbo',
+    'Model updated to GPT-5.2 Pro',
     'Integration with SIEM established',
     'Token limit warning: 80% capacity reached'
   ];

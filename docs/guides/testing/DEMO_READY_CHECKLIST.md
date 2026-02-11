@@ -64,7 +64,7 @@
 
 3. **Agent Wizard Creator** (Click "Create Agent")
    - Step 1: Agent Basics (name, nickname, description)
-   - Step 2: Model Selection (GPT-4, Claude, Gemini, Llama, Mistral)
+   - Step 2: Model Selection (GPT-5.2 Pro, Claude, Gemini 3 Pro, etc.)
    - Step 3: Role/Purpose Definition
    - Step 4: Prompt Template Configuration
    - Step 5: Integration Settings
@@ -116,7 +116,7 @@
 
 **Key Talking Points:**
 - "Anyone can query security data in plain English"
-- "Powered by Google Gemini 2.5 Flash AI"
+- "Powered by Google Gemini 3 Pro AI"
 - "Context-aware query enhancement"
 - "SQL transparency for technical users"
 - "No training required - just ask questions"
@@ -267,7 +267,7 @@
 ### Backend
 - Node.js with Express
 - PostgreSQL database (Neon Cloud)
-- Google Gemini 2.5 Flash AI
+- Google Gemini 3 Pro AI
 - Real-time data updates
 
 ### Features

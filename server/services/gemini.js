@@ -3,9 +3,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Gemini AI
+// Initialize Gemini AI (latest model)
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+const model = genAI.getGenerativeModel({ model: 'gemini-3-pro' });
 
 // Generate response from Gemini
 export async function generateResponse(prompt, context = {}) {

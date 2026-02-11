@@ -297,4 +297,4 @@ After successful deployment:
 **Architecture:** Serverless (Vercel)
 **Framework:** Vite + React
 **Databases:** PostgreSQL (Neon), Neo4j Aura
-**AI Services:** Google Gemini, OpenAI GPT-4o
+**AI Services:** Google Gemini 3 Pro, OpenAI GPT-5.2 Pro

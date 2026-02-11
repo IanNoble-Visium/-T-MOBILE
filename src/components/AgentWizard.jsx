@@ -41,7 +41,7 @@ const AgentWizard = ({ isOpen, onClose, onComplete }) => {
     nickname: '',
     description: '',
     icon: '🤖',
-    model: 'gpt-4-turbo',
+    model: 'gpt-5.2-pro',
     role: '',
     purpose: '',
     promptTemplate: '',
@@ -282,7 +282,7 @@ const AgentWizard = ({ isOpen, onClose, onComplete }) => {
 
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 mt-4">
                 <p className="text-sm text-blue-400">
-                  💡 <strong>Tip:</strong> GPT-4 Turbo offers the best balance of performance and cost for most security tasks.
+                  💡 <strong>Tip:</strong> GPT-5.2 Pro offers the best balance of performance and cost for most security tasks.
                 </p>
               </div>
             </div>

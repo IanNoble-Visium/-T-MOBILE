@@ -9,7 +9,7 @@
 #### Features
 
 **Asynchronous Voice Intelligence**
-- **GPT-4o Conversational AI**: Latest OpenAI model for natural, human-like responses
+- **GPT-5.2 Pro Conversational AI**: Latest OpenAI model for natural, human-like responses
 - **High-Quality TTS**: OpenAI TTS-1-HD with "Nova" professional voice
 - **Real-Time Speech Recognition**: Web Speech API with live transcription
 - **2-4 Second Response Time**: Fast, natural conversation flow
@@ -52,7 +52,7 @@ Combined Insights:
 
 **Backend Endpoints**
 ```javascript
-POST /api/ai/voice-chat      // GPT-4o conversation
+POST /api/ai/voice-chat      // GPT-5.2 Pro conversation
 POST /api/ai/text-to-speech  // TTS-1-HD audio
 ```
 
@@ -107,8 +107,8 @@ OPENAI_API_KEY=your_key_here  # Already in .env
 - Neo4j Aura - Network topology graph
 
 **AI Services**:
-- Google Gemini 2.5 Flash - Natural language SQL
-- OpenAI GPT-4o - Voice conversation
+- Google Gemini 3 Pro - Natural language SQL
+- OpenAI GPT-5.2 Pro - Voice conversation
 - OpenAI TTS-1-HD - Text-to-speech
 
 ---
@@ -149,7 +149,7 @@ NODE_ENV=development
 - `POST /enhance-query` - Context enhancement
 - `GET /dashboard-context` - Dashboard state
 - `GET /suggested-queries` - Query suggestions
-- `POST /voice-chat` - Voice conversation (GPT-4o) **NEW**
+- `POST /voice-chat` - Voice conversation (GPT-5.2 Pro) **NEW**
 - `POST /text-to-speech` - Text-to-speech (TTS-1-HD) **NEW**
 
 ---
@@ -172,7 +172,7 @@ NODE_ENV=development
 
 - **Voice AI Integration**: Natural conversation with security data
 - **Dual-Database Intelligence**: Real-time queries across SQL and graph databases
-- **OpenAI GPT-4o**: Latest conversational AI technology
+- **OpenAI GPT-5.2 Pro**: Latest conversational AI technology
 - **Production-Ready Voice**: High-quality TTS with professional sound
 
 ---

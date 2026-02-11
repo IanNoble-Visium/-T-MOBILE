@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Analytics Dashboard now features asynchronous voice conversation powered by OpenAI's GPT-4o and TTS-1-HD models. This creates a natural, human-like conversation experience for your demo.
+The AI Analytics Dashboard now features asynchronous voice conversation powered by OpenAI's GPT-5.2 Pro and TTS-1-HD models. This creates a natural, human-like conversation experience for your demo.
 
 ## Voice Conversation Flow (Diagram)
 
@@ -12,7 +12,7 @@ sequenceDiagram
   participant UI as Browser UI (AI Analytics)
   participant STT as Web Speech API (STT)
   participant VC as Backend API\nPOST /api/ai/voice-chat
-  participant LLM as OpenAI GPT-4o
+  participant LLM as OpenAI GPT-5.2 Pro
   participant TTS as Backend API\nPOST /api/ai/text-to-speech
   participant Audio as Browser Audio Output
 
@@ -81,7 +81,7 @@ sequenceDiagram
 ## Technical Details
 
 ### Models Used:
-- **GPT-4o**: Latest OpenAI model for conversational intelligence
+- **GPT-5.2 Pro**: Latest OpenAI model for conversational intelligence
   - Fast response times
   - Context-aware responses
   - Natural language understanding
@@ -92,7 +92,7 @@ sequenceDiagram
   - Low latency
 
 ### API Endpoints:
-- `POST /api/ai/voice-chat` - GPT-4o conversation processing
+- `POST /api/ai/voice-chat` - GPT-5.2 Pro conversation processing
 - `POST /api/ai/text-to-speech` - High-quality audio generation
 
 ### Browser Compatibility:

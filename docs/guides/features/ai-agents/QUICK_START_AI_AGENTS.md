@@ -59,7 +59,7 @@ Click **"AI Agents"** in the sidebar (Bot icon 🤖)
 ```
 Click "Create Agent" → 6-step wizard
 ├── Step 1: Agent Basics (name, nickname, description)
-├── Step 2: Model Selection (GPT-4, Claude, Gemini, etc.)
+├── Step 2: Model Selection (GPT-5.2 Pro, Claude, Gemini, etc.)
 ├── Step 3: Role/Purpose
 ├── Step 4: Prompt Template
 ├── Step 5: Integration Settings
@@ -166,7 +166,7 @@ Solution:
 ### Agents
 - **Count:** 40 agents
 - **Types:** Threat Hunter, Vulnerability Scanner, Anomaly Detector, Incident Responder
-- **Models:** GPT-4, Claude, Gemini, etc.
+- **Models:** GPT-5.2 Pro, Claude Opus 4.6, Gemini 3 Pro, etc.
 - **Status:** Randomly distributed (active, idle, investigating, responding)
 
 ### Activities

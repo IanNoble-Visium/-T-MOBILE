@@ -201,7 +201,7 @@ I've created comprehensive documentation for you:
 - **Cost**: Pay per use (very low for demo)
 
 ### OpenAI (AI Service)
-- Voice chat (GPT-4o)
+- Voice chat (GPT-5.2 Pro)
 - Text-to-speech
 - **Cost**: Pay per use
 

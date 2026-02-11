@@ -471,7 +471,7 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
                     </div>
                     <div className="space-y-1">
                       <Label htmlFor="agentModel" className="text-gray-300">Model</Label>
-                      <Input id="agentModel" value={editModel} onChange={(e) => setEditModel(e.target.value)} placeholder="e.g., GPT-4 Turbo" aria-label="Model name" />
+                      <Input id="agentModel" value={editModel} onChange={(e) => setEditModel(e.target.value)} placeholder="e.g., GPT-5.2 Pro" aria-label="Model name" />
                     </div>
                   </div>
                 </div>

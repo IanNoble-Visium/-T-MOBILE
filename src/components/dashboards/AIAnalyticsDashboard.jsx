@@ -298,7 +298,7 @@ const AIAnalyticsDashboard = () => {
     });
 
     try {
-      // Call GPT-4o voice chat endpoint
+      // Call GPT-5.2 Pro voice chat endpoint
       const response = await axios.post(`${API_BASE_URL}/ai/voice-chat`, {
         messages: voiceMessagesRef.current,
         dashboardContext
@@ -453,7 +453,7 @@ const AIAnalyticsDashboard = () => {
               <h1 className="text-4xl font-bold">AI Security Analytics</h1>
             </div>
             <p className="text-lg opacity-90">
-              Natural Language Intelligence powered by GPT-4o & Google Gemini AI
+              Natural Language Intelligence powered by GPT-5.2 Pro & Google Gemini 3 Pro
             </p>
           </div>
           

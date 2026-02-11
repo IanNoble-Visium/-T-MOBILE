@@ -27,7 +27,7 @@
    - Endpoint: `POST /api/ai/text-to-speech`
 
 3. **`api/ai/voice-chat.js`** ✅ NEW
-   - Serverless function for conversational AI using GPT-4o
+   - Serverless function for conversational AI using GPT-5.2 Pro
    - Handles voice conversation context
    - Returns AI responses optimized for voice
    - Endpoint: `POST /api/ai/voice-chat`
@@ -98,7 +98,7 @@ git commit -m "Fix: Replace browser Web Speech API with OpenAI Whisper for relia
 
 - Add speech-to-text serverless endpoint using OpenAI Whisper API
 - Add text-to-speech serverless endpoint using OpenAI TTS-1-HD
-- Add voice-chat serverless endpoint using GPT-4o
+- Add voice-chat serverless endpoint using GPT-5.2 Pro
 - Create custom useSpeechRecognition hook with MediaRecorder
 - Update AIAnalyticsDashboard to use new speech recognition
 - Remove dependency on unreliable browser Web Speech API

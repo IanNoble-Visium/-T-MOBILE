@@ -215,7 +215,7 @@ router.get('/suggested-queries', async (req, res) => {
   }
 });
 
-// Voice chat endpoint using GPT-4o
+// Voice chat endpoint using GPT-5.2 Pro
 router.post('/voice-chat', async (req, res) => {
   try {
     const { messages, dashboardContext = {} } = req.body;
@@ -322,7 +322,7 @@ Guidelines:
 
     // Try multiple model names for compatibility
     let completion;
-    const modelOptions = ['gpt-4o', 'gpt-4-turbo', 'gpt-4', 'gpt-3.5-turbo'];
+    const modelOptions = ['gpt-5.2-pro', 'gpt-5.2-codex', 'gpt-4o', 'gpt-3.5-turbo'];
     let modelUsed = null;
 
     for (const model of modelOptions) {

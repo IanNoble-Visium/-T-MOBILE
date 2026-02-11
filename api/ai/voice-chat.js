@@ -7,7 +7,7 @@ const openai = new OpenAI({
 
 /**
  * Voice Chat Endpoint
- * Handles conversational AI for voice interactions using GPT-4o
+ * Handles conversational AI for voice interactions using GPT-5.2 Pro
  * 
  * POST /api/ai/voice-chat
  * Body: {
@@ -73,12 +73,12 @@ export default async function handler(req, res) {
       ...messages
     ];
 
-    console.log('Sending voice chat request to OpenAI GPT-4o...');
+    console.log('Sending voice chat request to OpenAI GPT-5.2 Pro...');
     console.log('Message count:', messages.length);
 
-    // Call OpenAI GPT-4o for conversational response
+    // Call OpenAI GPT-5.2 Pro for conversational response
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.2-pro',
       messages: openaiMessages,
       temperature: 0.7,
       max_tokens: 500, // Keep responses concise for voice
