@@ -1,5 +1,5 @@
-import { useEffect } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
+import { useEffect, useMemo } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline, Tooltip } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { NODE_TYPES } from '@/lib/networkDataset'
@@ -13,9 +13,69 @@ L.Icon.Default.mergeOptions({
 })
 
 /**
+ * Helper function to get edge color based on alarm severity or utilization
+ */
+const getEdgeColor = (edge, isAlarmed, edgeAlarms) => {
+  // Check if edge has alarms
+  const edgeAlarm = edgeAlarms?.find(a => a.targetId === edge.id && !a.resolved)
+  if (edgeAlarm) {
+    // Color based on alarm severity
+    switch (edgeAlarm.severity) {
+      case 'critical':
+        return '#E4002B' // Red
+      case 'high':
+        return '#FF6B35' // Orange
+      case 'medium':
+        return '#FFB81C' // Yellow
+      case 'low':
+        return '#0066CC' // Blue
+      default:
+        return '#00A651' // Green (normal)
+    }
+  }
+  
+  // Fallback to utilization-based color if no alarms
+  const utilization = edge.utilization || 0
+  if (utilization < 40) {
+    return '#00A651' // Green - low utilization
+  } else if (utilization < 70) {
+    return '#FFB81C' // Yellow - medium utilization
+  } else {
+    return '#E4002B' // Red - high utilization
+  }
+}
+
+/**
+ * Helper function to get edge thickness based on bandwidth
+ */
+const getEdgeThickness = (edge) => {
+  const bandwidth = edge.bandwidth || 10
+  // Map bandwidth (10-100) to thickness (2-8)
+  const minBandwidth = 10
+  const maxBandwidth = 100
+  const minThickness = 2
+  const maxThickness = 8
+  
+  const thickness = minThickness + (bandwidth - minBandwidth) / (maxBandwidth - minBandwidth) * (maxThickness - minThickness)
+  return Math.max(minThickness, Math.min(maxThickness, thickness))
+}
+
+/**
+ * Helper function to get dash array based on latency
+ */
+const getDashArray = (edge) => {
+  const latency = edge.latency || 0
+  // High latency (>50ms) = dashed, low latency = solid
+  if (latency > 50) {
+    return '10, 5' // Dashed pattern
+  }
+  return null // Solid line
+}
+
+/**
  * Custom marker component for network nodes
  */
-const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick }) => {
+const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick, onNodeRightClick }) => {
   const typeInfo = NODE_TYPES[node.type]
 
   // Validate location data
@@ -60,7 +120,12 @@ const NodeMarker = ({ node, isAlarmed, isSelected, onNodeClick }) => {
       position={[node.location.lat, node.location.lon]}
       icon={icon}
       eventHandlers={{
-        click: () => onNodeClick?.(node)
+        click: () => onNodeClick?.(node),
+        contextmenu: (e) => {
+          e.originalEvent.preventDefault()
+          e.originalEvent.stopPropagation()
+          onNodeRightClick?.(node)
+        }
       }}
     >
       <Popup>
@@ -96,14 +161,69 @@ const MapController = ({ center, zoom }) => {
 }
 
 /**
+ * Edge Connection Component
+ * Renders a polyline for a network edge/connection
+ */
+const EdgeConnection = ({ edge, sourceNode, targetNode, isAlarmed, isSelected, onEdgeClick, edgeAlarms }) => {
+  if (!sourceNode?.location || !targetNode?.location) {
+    return null
+  }
+
+  const positions = [
+    [sourceNode.location.lat, sourceNode.location.lon],
+    [targetNode.location.lat, targetNode.location.lon]
+  ]
+
+  const color = getEdgeColor(edge, isAlarmed, edgeAlarms)
+  const weight = isAlarmed ? getEdgeThickness(edge) + 2 : getEdgeThickness(edge)
+  const dashArray = getDashArray(edge)
+  const opacity = isAlarmed ? 0.9 : 0.6
+
+  return (
+    <Polyline
+      positions={positions}
+      pathOptions={{
+        color: isSelected ? '#E20074' : color,
+        weight: isSelected ? weight + 1 : weight,
+        opacity,
+        dashArray
+      }}
+      eventHandlers={{
+        click: (e) => {
+          e.originalEvent.stopPropagation()
+          onEdgeClick?.(edge)
+        }
+      }}
+    >
+      <Tooltip permanent={false} direction="center" className="edge-tooltip">
+        <div className="text-xs">
+          <p className="font-semibold">{edge.bandwidth || 'N/A'} Gbps</p>
+          <p>Latency: {edge.latency || 'N/A'}ms</p>
+          {edge.utilization !== undefined && (
+            <p>Utilization: {edge.utilization}%</p>
+          )}
+        </div>
+      </Tooltip>
+    </Polyline>
+  )
+}
+
+/**
  * GeographicMapVisualization Component
- * Renders an interactive Leaflet map with network nodes
+ * Renders an interactive Leaflet map with network nodes and edges
  */
 const GeographicMapVisualization = ({
   nodes = [],
+  edges = [],
   onNodeClick = null,
+  onEdgeClick = null,
+  onNodeRightClick = null,
   selectedNodeId = null,
+  selectedEdgeId = null,
   alarmedNodeIds = [],
+  alarmedEdgeIds = [],
+  edgeAlarms = [],
+  getNode = null,
   center = [39.8283, -98.5795], // Center of USA
   zoom = 4
 }) => {
@@ -124,6 +244,24 @@ const GeographicMapVisualization = ({
 
   const bounds = calculateBounds()
 
+  // Create node lookup map for efficient edge rendering
+  const nodeMap = useMemo(() => {
+    const map = new Map()
+    nodes.forEach(node => {
+      map.set(node.id, node)
+    })
+    return map
+  }, [nodes])
+
+  // Filter edges to only include those with valid source and target nodes
+  const validEdges = useMemo(() => {
+    return edges.filter(edge => {
+      const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source
+      const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target
+      return nodeMap.has(sourceId) && nodeMap.has(targetId)
+    })
+  }, [edges, nodeMap])
+
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-border">
       <MapContainer
@@ -140,6 +278,29 @@ const GeographicMapVisualization = ({
 
         <MapController center={center} zoom={zoom} />
 
+        {/* Render edge connections (below markers for proper z-index) */}
+        {validEdges.map(edge => {
+          const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source
+          const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target
+          const sourceNode = nodeMap.get(sourceId)
+          const targetNode = nodeMap.get(targetId)
+          
+          if (!sourceNode || !targetNode) return null
+
+          return (
+            <EdgeConnection
+              key={edge.id}
+              edge={edge}
+              sourceNode={sourceNode}
+              targetNode={targetNode}
+              isAlarmed={alarmedEdgeIds.includes(edge.id)}
+              isSelected={selectedEdgeId === edge.id}
+              onEdgeClick={onEdgeClick}
+              edgeAlarms={edgeAlarms.filter(a => a.targetId === edge.id)}
+            />
+          )
+        })}
+
         {/* Render node markers */}
         {nodes.map(node => (
           <NodeMarker
@@ -148,13 +309,14 @@ const GeographicMapVisualization = ({
             isAlarmed={alarmedNodeIds.includes(node.id)}
             isSelected={selectedNodeId === node.id}
             onNodeClick={onNodeClick}
+            onNodeRightClick={onNodeRightClick}
           />
         ))}
       </MapContainer>
 
       {/* Instructions */}
-      <div className="absolute bottom-4 left-4 text-xs text-white bg-black/60 p-2 rounded z-10">
-        <p>Scroll to zoom • Drag to pan • Click markers for details</p>
+      <div className="absolute bottom-4 left-4 text-xs text-white bg-black/60 p-2 rounded z-[1000]">
+        <p>Scroll to zoom • Drag to pan • Click markers/edges for details • Right-click nodes to regenerate image</p>
       </div>
     </div>
   )

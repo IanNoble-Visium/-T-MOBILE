@@ -5,6 +5,8 @@ import useAlarmSystem from '@/hooks/useAlarmSystem'
 import GeographicMapVisualization from '@/components/GeographicMapVisualization'
 import NetworkNodeDetail from '@/components/NetworkNodeDetail'
 import AlarmDashboard from '@/components/AlarmDashboard'
+import NodeImageRegenerator from '@/components/NodeImageRegenerator'
+import { regenerateSingleNodeImage, getNodeImage } from '@/lib/nodeImageManager'
 import { NODE_TYPES } from '@/lib/networkDataset'
 import { generateEventStream, generateThreatEvents, generateIncidents } from '@/lib/mockData'
 
@@ -14,7 +16,9 @@ const GeographicMapDashboard = () => {
     loading,
     error,
     getNodesByType,
-    getNodesByRegion
+    getNodesByRegion,
+    getNode,
+    getEdge
   } = useNetworkDataset()
 
   // Generate mock data for alarm mapping (memoized to prevent infinite loops)
@@ -27,7 +31,9 @@ const GeographicMapDashboard = () => {
   const {
     alarms,
     getNodeAlarms,
+    getEdgeAlarms,
     getAlarmedNodes: getAlarmedNodesFromAlarms,
+    getAlarmedEdges: getAlarmedEdgesFromAlarms,
     resolveAlarm,
     removeAlarm,
     resolveAllAlarms,
@@ -35,6 +41,10 @@ const GeographicMapDashboard = () => {
   } = useAlarmSystem(dataset, eventStream, threatEvents, incidents)
 
   const [selectedNode, setSelectedNode] = useState(null)
+  const [selectedEdge, setSelectedEdge] = useState(null)
+  const [regeneratorOpen, setRegeneratorOpen] = useState(false)
+  const [selectedNodeForRegeneration, setSelectedNodeForRegeneration] = useState(null)
+  const [nodeImageUrl, setNodeImageUrl] = useState(null)
   const [filterType, setFilterType] = useState(null)
   const [filterRegion, setFilterRegion] = useState(null)
   const [filterSeverity, setFilterSeverity] = useState(null)
@@ -58,6 +68,7 @@ const GeographicMapDashboard = () => {
   }
 
   const alarmedNodeIds = getAlarmedNodesFromAlarms()
+  const alarmedEdgeIds = getAlarmedEdgesFromAlarms()
 
   // Filter nodes based on selected filters
   let filteredNodes = dataset?.nodes || []
@@ -67,6 +78,16 @@ const GeographicMapDashboard = () => {
   if (filterRegion) {
     filteredNodes = filteredNodes.filter(n => n.region === filterRegion)
   }
+
+  // Filter edges to only include those with filtered nodes
+  const filteredNodeIds = new Set(filteredNodes.map(n => n.id))
+  let filteredEdges = (dataset?.edges || []).filter(
+    e => {
+      const sourceId = typeof e.source === 'object' ? e.source.id : e.source
+      const targetId = typeof e.target === 'object' ? e.target.id : e.target
+      return filteredNodeIds.has(sourceId) && filteredNodeIds.has(targetId)
+    }
+  )
 
   // Get unique regions
   const regions = [...new Set(dataset?.nodes?.map(n => n.region) || [])]
@@ -78,9 +99,54 @@ const GeographicMapDashboard = () => {
 
   const handleNodeClick = (node) => {
     setSelectedNode(node)
+    setSelectedEdge(null)
     // Optionally zoom to node
     setMapCenter([node.location.lat, node.location.lon])
     setMapZoom(8)
+  }
+
+  const handleEdgeClick = (edge) => {
+    const sourceNode = getNode(typeof edge.source === 'object' ? edge.source.id : edge.source)
+    const targetNode = getNode(typeof edge.target === 'object' ? edge.target.id : edge.target)
+    setSelectedEdge({ ...edge, sourceNode, targetNode })
+    setSelectedNode(null)
+  }
+
+  const handleNodeRightClick = async (node) => {
+    setSelectedNodeForRegeneration(node)
+    // Load current image URL if available
+    try {
+      const currentImageUrl = await getNodeImage(node, false)
+      setNodeImageUrl(currentImageUrl || null)
+    } catch (error) {
+      console.error('Error loading node image:', error)
+      setNodeImageUrl(null)
+    }
+    setRegeneratorOpen(true)
+  }
+
+  const handleRegenerateImage = async (options) => {
+    try {
+      const newImageUrl = await regenerateSingleNodeImage(options.node, options)
+      if (newImageUrl) {
+        setNodeImageUrl(newImageUrl)
+        // Force re-render by updating the node (if needed)
+        console.log(`Successfully regenerated image for ${options.node.name}`)
+      }
+    } catch (error) {
+      console.error('Error regenerating image:', error)
+      throw error
+    }
+  }
+
+  const getSelectedNodeAlarms = () => {
+    if (!selectedNode) return []
+    return getNodeAlarms(selectedNode.id)
+  }
+
+  const getSelectedEdgeAlarms = () => {
+    if (!selectedEdge) return []
+    return getEdgeAlarms(selectedEdge.id)
   }
 
   const handleZoomToRegion = (region) => {
@@ -250,9 +316,18 @@ const GeographicMapDashboard = () => {
         <div className="h-[600px] rounded-lg overflow-hidden">
           <GeographicMapVisualization
             nodes={filteredNodes}
+            edges={filteredEdges}
             onNodeClick={handleNodeClick}
+            onEdgeClick={handleEdgeClick}
+            onNodeRightClick={handleNodeRightClick}
             selectedNodeId={selectedNode?.id}
+            selectedEdgeId={selectedEdge?.id}
             alarmedNodeIds={filteredAlarmedNodeIds}
+            alarmedEdgeIds={alarmedEdgeIds.filter(edgeId =>
+              filteredEdges.some(e => e.id === edgeId)
+            )}
+            edgeAlarms={alarms.filter(a => a.targetType === 'edge')}
+            getNode={getNode}
             center={mapCenter}
             zoom={mapZoom}
           />
@@ -322,8 +397,33 @@ const GeographicMapDashboard = () => {
         <NetworkNodeDetail
           item={selectedNode}
           itemType="node"
-          alarms={[]}
+          alarms={getSelectedNodeAlarms()}
           onClose={() => setSelectedNode(null)}
+        />
+      )}
+
+      {/* Edge Detail Modal */}
+      {selectedEdge && (
+        <NetworkNodeDetail
+          item={selectedEdge}
+          itemType="edge"
+          alarms={getSelectedEdgeAlarms()}
+          onClose={() => setSelectedEdge(null)}
+        />
+      )}
+
+      {/* Node Image Regenerator Dialog */}
+      {selectedNodeForRegeneration && (
+        <NodeImageRegenerator
+          node={selectedNodeForRegeneration}
+          currentImageUrl={nodeImageUrl}
+          isOpen={regeneratorOpen}
+          onClose={() => {
+            setRegeneratorOpen(false)
+            setSelectedNodeForRegeneration(null)
+            setNodeImageUrl(null)
+          }}
+          onRegenerate={handleRegenerateImage}
         />
       )}
     </div>
