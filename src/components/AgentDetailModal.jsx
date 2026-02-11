@@ -39,6 +39,7 @@ import {
   FileText,
   X
 } from 'lucide-react';
+import BotIdentityPanel from './agents/BotIdentityPanel';
 
 const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
   if (!agent) return null;
@@ -332,6 +333,9 @@ const AgentDetailModal = ({ agent, isOpen, onClose, onUpdate }) => {
                 </div>
               </div>
             </div>
+
+            {/* Bot Identity System */}
+            <BotIdentityPanel agent={agent} />
           </TabsContent>
 
           {/* Activity Tab */}
