@@ -1,6 +1,7 @@
 import React, { useRef, useMemo, useState, useCallback, useEffect } from 'react'
 import ForceGraph3D from 'react-force-graph-3d'
 import { NODE_TYPES } from '@/lib/networkDataset'
+import { getNodeImage } from '@/lib/nodeImageManager'
 import * as THREE from 'three'
 
 // Regional colors for cyberpunk theme
@@ -31,7 +32,41 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
   const [hoveredNode, setHoveredNode] = useState(null)
   const [selectedNode, setSelectedNode] = useState(null)
   const [isFullscreen, setIsFullscreen] = useState(false)
+  const [showIcons, setShowIcons] = useState(false)
+  const [nodeImages, setNodeImages] = useState({})
+  const [iconsLoading, setIconsLoading] = useState(false)
   const containerRef = useRef(null)
+  const textureCache = useRef(new Map())
+  const textureLoader = useRef(new THREE.TextureLoader())
+
+  // Load node images when icon mode is enabled
+  useEffect(() => {
+    if (!showIcons) return
+
+    const loadImages = async () => {
+      setIconsLoading(true)
+      const images = {}
+
+      for (const node of nodes) {
+        try {
+          const imageUrl = await getNodeImage(node, false)
+          if (imageUrl) {
+            images[node.id] = imageUrl
+          }
+        } catch (error) {
+          console.error(`Error loading image for node ${node.id}:`, error)
+        }
+      }
+
+      console.log(`Loaded ${Object.keys(images).length} node images for 3D view`)
+      setNodeImages(images)
+      setIconsLoading(false)
+    }
+
+    if (nodes.length > 0) {
+      loadImages()
+    }
+  }, [nodes, showIcons])
 
   // Transform nodes and edges to 3d-force-graph format
   const graphData = useMemo(() => {
@@ -170,31 +205,64 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
     }
   }, [])
 
-  // Custom node 3D object - enhanced sphere with glow
+  // Custom node 3D object - enhanced sphere with glow, or icon sprite
   const nodeThreeObject = useCallback((node) => {
-    const sprite = new THREE.TextureLoader().load('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMzIiIGN5PSIzMiIgcj0iMzIiIGZpbGw9IiNmZmYiLz48L3N2Zz4=')
-    const material = new THREE.SpriteMaterial({ map: sprite })
-    const spriteObj = new THREE.Sprite(material)
-    
-    // Create a more sophisticated 3D node
     const group = new THREE.Group()
-    
-    // Main sphere
-    const geometry = new THREE.SphereGeometry(node.val / 2, 16, 16)
-    const nodeMaterial = new THREE.MeshPhongMaterial({
-      color: node.color,
-      emissive: node.color,
-      emissiveIntensity: 0.5,
-      shininess: 100,
-      transparent: true,
-      opacity: 0.9
-    })
-    const sphere = new THREE.Mesh(geometry, nodeMaterial)
-    group.add(sphere)
-    
-    // Glow effect for alarmed nodes
+    const nodeSize = node.val / 2
+    const imageUrl = showIcons ? nodeImages[node.id] : null
+
+    if (imageUrl) {
+      // --- Icon sprite mode ---
+      let texture = textureCache.current.get(imageUrl)
+      if (!texture) {
+        texture = textureLoader.current.load(imageUrl, () => {
+          // Force re-render when texture loads
+          if (fgRef.current) fgRef.current.refresh()
+        })
+        texture.colorSpace = THREE.SRGBColorSpace
+        textureCache.current.set(imageUrl, texture)
+      }
+
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        opacity: 0.95,
+        depthWrite: false
+      })
+      const iconSprite = new THREE.Sprite(spriteMaterial)
+      const spriteSize = nodeSize * 3
+      iconSprite.scale.set(spriteSize, spriteSize, 1)
+      group.add(iconSprite)
+
+      // Subtle colored backing glow behind icon for visibility
+      const backingMaterial = new THREE.SpriteMaterial({
+        color: node.color,
+        transparent: true,
+        opacity: 0.25,
+        depthWrite: false
+      })
+      const backing = new THREE.Sprite(backingMaterial)
+      backing.scale.set(spriteSize * 1.3, spriteSize * 1.3, 1)
+      group.add(backing)
+    } else {
+      // --- Sphere mode (default) ---
+      const geometry = new THREE.SphereGeometry(nodeSize, 16, 16)
+      const nodeMaterial = new THREE.MeshPhongMaterial({
+        color: node.color,
+        emissive: node.color,
+        emissiveIntensity: 0.5,
+        shininess: 100,
+        transparent: true,
+        opacity: 0.9
+      })
+      const sphere = new THREE.Mesh(geometry, nodeMaterial)
+      group.add(sphere)
+    }
+
+    // Glow effect for alarmed nodes (both modes)
     if (node.isAlarmed) {
-      const glowGeometry = new THREE.SphereGeometry(node.val / 2 + 2, 16, 16)
+      const glowSize = imageUrl ? nodeSize * 2 : nodeSize + 2
+      const glowGeometry = new THREE.SphereGeometry(glowSize, 16, 16)
       const glowMaterial = new THREE.MeshBasicMaterial({
         color: '#E4002B',
         transparent: true,
@@ -204,10 +272,11 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
       const glow = new THREE.Mesh(glowGeometry, glowMaterial)
       group.add(glow)
     }
-    
-    // Selection ring
+
+    // Selection ring (both modes)
     if (node.isSelected) {
-      const ringGeometry = new THREE.TorusGeometry(node.val / 2 + 3, 1, 8, 32)
+      const ringRadius = imageUrl ? nodeSize * 1.8 : nodeSize + 3
+      const ringGeometry = new THREE.TorusGeometry(ringRadius, 1, 8, 32)
       const ringMaterial = new THREE.MeshBasicMaterial({
         color: '#E20074',
         emissive: '#E20074',
@@ -217,9 +286,9 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
       ring.rotation.x = Math.PI / 2
       group.add(ring)
     }
-    
+
     return group
-  }, [])
+  }, [showIcons, nodeImages])
 
   // Custom link styling
   const linkColor = useCallback((link) => link.color || '#00FFFF')
@@ -293,6 +362,25 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
           <p>🖱️ Scroll: Zoom</p>
           <p>🖱️ Drag node: Move</p>
           <p>🖱️ Click node: Select</p>
+          <p>🖼️ Toggle: Icons / Spheres</p>
+        </div>
+        <div className="border-t border-cyan-400/30 pt-3 mb-3">
+          <p className="text-cyan-400 font-bold mb-2">DISPLAY</p>
+          <button
+            onClick={() => setShowIcons(prev => !prev)}
+            disabled={iconsLoading}
+            className={`w-full px-2 py-1.5 border rounded text-[10px] font-bold transition-colors ${
+              showIcons
+                ? 'bg-pink-500/30 hover:bg-pink-500/50 border-pink-400/70 text-pink-300'
+                : 'bg-cyan-500/20 hover:bg-cyan-500/40 border-cyan-400/50 text-cyan-300'
+            } ${iconsLoading ? 'opacity-50 cursor-wait' : ''}`}
+            title={showIcons ? 'Switch to colored spheres' : 'Switch to device type icons'}
+          >
+            {iconsLoading ? '⏳ Loading Icons...' : showIcons ? '🎨 Switch to Spheres' : '🖼️ Switch to Icons'}
+          </button>
+          {showIcons && Object.keys(nodeImages).length === 0 && !iconsLoading && (
+            <p className="text-yellow-400/80 text-[9px] mt-1">No cached icons found. Generate via 2D Enhanced view first.</p>
+          )}
         </div>
         <div className="border-t border-cyan-400/30 pt-3">
           <p className="text-cyan-400 font-bold mb-2">CAMERA PRESETS</p>

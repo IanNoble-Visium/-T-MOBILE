@@ -2,54 +2,105 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// ZAI API Configuration
-// Using Coding Plan endpoint (required for GLM Coding Max Yearly Plan)
-const ZAI_API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
-const ZAI_MODEL = 'glm-4.7'; // Latest GLM 4.7 model from ZAI
+// ===== PROVIDER CONFIGURATIONS =====
 
-// Validate ZAI API key
+// OpenAI Configuration (default - fast for demo)
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_MODEL = 'gpt-4o'; // Fast, capable, widely available
+const openaiApiKey = process.env.OPENAI_API_KEY;
+
+// ZAI Configuration (alternative)
+const ZAI_API_URL = 'https://api.z.ai/api/coding/paas/v4/chat/completions';
+const ZAI_MODEL = 'glm-4.7';
 const zaiApiKey = process.env.ZAI_API_KEY;
-if (!zaiApiKey) {
-  console.error('ZAI_API_KEY environment variable is not set');
+
+// Default provider
+const DEFAULT_PROVIDER = 'openai';
+
+// Log available providers
+if (openaiApiKey) console.log('✅ OpenAI API key configured');
+else console.warn('⚠️ OPENAI_API_KEY not set');
+if (zaiApiKey) console.log('✅ ZAI API key configured');
+else console.warn('⚠️ ZAI_API_KEY not set');
+
+/**
+ * Get provider configuration
+ */
+function getProviderConfig(provider = DEFAULT_PROVIDER) {
+  if (provider === 'openai') {
+    if (!openaiApiKey) throw new Error('OPENAI_API_KEY environment variable is not configured.');
+    return {
+      name: 'OpenAI',
+      model: OPENAI_MODEL,
+      url: OPENAI_API_URL,
+      apiKey: openaiApiKey,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`
+      }
+    };
+  }
+  
+  if (provider === 'zai') {
+    if (!zaiApiKey) throw new Error('ZAI_API_KEY environment variable is not configured.');
+    return {
+      name: 'ZAI',
+      model: ZAI_MODEL,
+      url: ZAI_API_URL,
+      apiKey: zaiApiKey,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${zaiApiKey}`
+      }
+    };
+  }
+  
+  throw new Error(`Unknown AI provider: ${provider}. Use 'openai' or 'zai'.`);
 }
 
 /**
- * Generate response from ZAI API (GLM-4.7)
- * Includes timeout handling to prevent Vercel 504 errors (30s limit)
+ * Generate response from AI provider (OpenAI or ZAI)
+ * Both use OpenAI-compatible chat completions format
+ * @param {string} prompt - The prompt to send
+ * @param {object} context - Optional context
+ * @param {string} provider - 'openai' or 'zai' (default: 'openai')
  */
-export async function generateResponse(prompt, context = {}) {
-  // Check if API key is configured
-  if (!zaiApiKey) {
-    const errorMsg = 'ZAI_API_KEY environment variable is not configured. Please set it in your Vercel environment variables.';
-    console.error(errorMsg);
-    throw new Error(errorMsg);
-  }
-
-  // Timeout wrapper: 25 seconds to stay under Vercel's 30s limit
-  const TIMEOUT_MS = 25000;
+export async function generateResponse(prompt, context = {}, provider = DEFAULT_PROVIDER) {
+  const config = getProviderConfig(provider);
+  
+  // Timeout: 55 seconds (Vercel Pro allows 60s)
+  const TIMEOUT_MS = 55000;
+  
+  const startTime = Date.now();
+  console.log(`[${config.name}] Sending request to ${config.model}...`);
   
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
     
-    const response = await fetch(ZAI_API_URL, {
+    const requestBody = {
+      model: config.model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      stream: false
+    };
+    
+    // Use max_completion_tokens for newer OpenAI models, max_tokens for others
+    if (provider === 'openai') {
+      requestBody.max_completion_tokens = 1000;
+    } else {
+      requestBody.max_tokens = 1000;
+    }
+    
+    const response = await fetch(config.url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${zaiApiKey}`
-      },
-      body: JSON.stringify({
-        model: ZAI_MODEL,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000, // Reduced from 2000 to speed up responses
-        stream: false
-      }),
+      headers: config.headers,
+      body: JSON.stringify(requestBody),
       signal: controller.signal
     });
     
@@ -59,61 +110,73 @@ export async function generateResponse(prompt, context = {}) {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error?.message || errorData.message || `HTTP ${response.status}`;
       
-      console.error('ZAI API error details:');
-      console.error('- Status:', response.status);
-      console.error('- Status text:', response.statusText);
-      console.error('- Error message:', errorMessage);
-      console.error('- Full error:', JSON.stringify(errorData, null, 2));
+      console.error(`[${config.name}] API error:`, response.status, errorMessage);
       
-      // Provide specific error messages
-      if (response.status === 401 || errorMessage?.includes('API_KEY') || errorMessage?.includes('authentication')) {
-        throw new Error('Invalid or missing ZAI API key. Please check your ZAI_API_KEY environment variable.');
+      if (response.status === 401) {
+        throw new Error(`${config.name} API key is invalid or missing.`);
       }
-      if (response.status === 429 || errorMessage?.includes('quota') || errorMessage?.includes('rate limit')) {
-        throw new Error('ZAI API quota exceeded or rate limited. Please try again later.');
+      if (response.status === 429) {
+        throw new Error(`${config.name} API rate limited. Please try again in a moment.`);
       }
-      if (response.status === 400 || errorMessage?.includes('invalid')) {
-        throw new Error(`ZAI API request error: ${errorMessage}`);
+      if (response.status === 400) {
+        // If max_completion_tokens fails, retry with max_tokens
+        if (provider === 'openai' && errorMessage?.includes('max_completion_tokens')) {
+          console.log('[OpenAI] Retrying with max_tokens...');
+          requestBody.max_tokens = requestBody.max_completion_tokens;
+          delete requestBody.max_completion_tokens;
+          
+          const retryResponse = await fetch(config.url, {
+            method: 'POST',
+            headers: config.headers,
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (retryResponse.ok) {
+            const retryData = await retryResponse.json();
+            const retryContent = retryData.choices?.[0]?.message?.content;
+            if (retryContent) {
+              const elapsed = Date.now() - startTime;
+              console.log(`[${config.name}] Response in ${elapsed}ms (retry) using ${config.model}`);
+              return retryContent;
+            }
+          }
+        }
+        throw new Error(`${config.name} API request error: ${errorMessage}`);
       }
       
-      throw new Error(`ZAI API error: ${errorMessage}`);
+      throw new Error(`${config.name} API error: ${errorMessage}`);
     }
 
     const data = await response.json();
-    
-    // Extract response text from ZAI API response format
     const content = data.choices?.[0]?.message?.content;
+    
     if (!content) {
-      console.error('Unexpected ZAI API response format:', JSON.stringify(data, null, 2));
-      throw new Error('Invalid response format from ZAI API');
+      console.error(`[${config.name}] Unexpected response format:`, JSON.stringify(data, null, 2));
+      throw new Error(`Invalid response format from ${config.name} API`);
     }
     
-    console.log(`Successfully generated response using ZAI GLM-4.7 (${data.usage?.total_tokens || 'unknown'} tokens)`);
+    const elapsed = Date.now() - startTime;
+    console.log(`[${config.name}] Response in ${elapsed}ms using ${config.model} (${data.usage?.total_tokens || 'unknown'} tokens)`);
     return content;
   } catch (error) {
     // Handle timeout/abort errors
-    if (error.name === 'AbortError' || error.message?.includes('aborted') || error.message?.includes('timeout')) {
-      console.error('ZAI API request timed out after 25 seconds');
-      throw new Error('Request timed out. The AI service is taking too long to respond. Please try a simpler query or try again later.');
+    if (error.name === 'AbortError' || error.message?.includes('aborted')) {
+      const elapsed = Date.now() - startTime;
+      console.error(`[${config.name}] Request timed out after ${elapsed}ms`);
+      throw new Error(`Request timed out after ${Math.round(elapsed / 1000)}s. Try a simpler query or switch AI provider in settings.`);
     }
     
-    // Re-throw if it's already a formatted error
-    if (error.message?.startsWith('ZAI API') || error.message?.startsWith('Invalid') || error.message?.startsWith('ZAI_API_KEY')) {
+    // Re-throw formatted errors
+    if (error.message?.includes('API') || error.message?.includes('timed out') || error.message?.includes('not configured')) {
       throw error;
     }
     
-    // Handle network errors
-    if (error.message?.includes('fetch') || error.message?.includes('network')) {
-      throw new Error('Network error connecting to ZAI API. Please check your internet connection.');
-    }
-    
-    // Generic error with actual message
-    throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
+    throw new Error(`Failed to generate AI response (${config.name}): ${error.message || 'Unknown error'}`);
   }
 }
 
 // Convert natural language to SQL query
-export async function naturalLanguageToSQL(userQuery, dashboardContext = {}) {
+export async function naturalLanguageToSQL(userQuery, dashboardContext = {}, provider = DEFAULT_PROVIDER) {
   const schemaContext = `
 Database Schema:
 - threat_events: id, timestamp, type, severity, source_city, source_country, target_city, target_country, status, mitre_technique, confidence, description
@@ -134,12 +197,12 @@ Query: "${userQuery}"
 
 Rules: SELECT only, use JOINs, add LIMIT 100, use aggregates when needed. Return SQL only:`;
 
-  const sqlQuery = await generateResponse(prompt);
+  const sqlQuery = await generateResponse(prompt, {}, provider);
   return sqlQuery.trim().replace(/```sql\n?/g, '').replace(/```\n?/g, '').trim();
 }
 
 // Generate human-readable explanation of SQL results
-export async function explainResults(userQuery, sqlQuery, results, dashboardContext = {}) {
+export async function explainResults(userQuery, sqlQuery, results, dashboardContext = {}, provider = DEFAULT_PROVIDER) {
   const contextInfo = dashboardContext.summary ? `\nDashboard Context: ${dashboardContext.summary}` : '';
   
   const prompt = `Cybersecurity analyst. Explain query results concisely:
@@ -151,11 +214,11 @@ Results: ${JSON.stringify(results.slice(0, 5))} ${results.length > 5 ? `(+${resu
 
 Answer: 1) Direct answer, 2) Key insights, 3) Security concerns, 4) Actionable steps with confidence % (90-100%: strong evidence, 75-89%: good evidence, 60-74%: moderate, <60%: speculative). Format steps as "**[Name] (XX%):** Description". Under 200 words.`;
 
-  return await generateResponse(prompt);
+  return await generateResponse(prompt, {}, provider);
 }
 
 // Enhance user query with dashboard context
-export async function enhanceQuery(userQuery, dashboardContext) {
+export async function enhanceQuery(userQuery, dashboardContext, provider = DEFAULT_PROVIDER) {
   const prompt = `You are a cybersecurity AI assistant. Enhance this user query with relevant context to make it more specific and actionable.
 
 Dashboard Context:
@@ -173,7 +236,7 @@ Enhanced Query Instructions:
 
 Return ONLY the enhanced query text, nothing else:`;
 
-  const enhanced = await generateResponse(prompt);
+  const enhanced = await generateResponse(prompt, {}, provider);
   return enhanced.trim().replace(/^["']|["']$/g, ''); // Remove surrounding quotes if present
 }
 
