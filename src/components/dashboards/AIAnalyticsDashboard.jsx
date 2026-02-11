@@ -501,7 +501,7 @@ const AIAnalyticsDashboard = () => {
               <h1 className="text-4xl font-bold">AI Security Analytics</h1>
             </div>
             <p className="text-lg opacity-90">
-              Natural Language Intelligence powered by GPT-5.2 Pro & Google Gemini 3 Pro
+              Natural Language Intelligence powered by GPT-5.2 Pro & ZAI GLM-4.7
             </p>
           </div>
           

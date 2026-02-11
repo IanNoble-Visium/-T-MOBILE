@@ -1,23 +1,66 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Gemini AI (latest model)
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-// Use valid Gemini model names with fallback
-// Valid models: gemini-3-pro-preview, gemini-3-flash-preview, gemini-1.5-pro, gemini-1.5-flash
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' }); // Using stable production model
+// ZAI API Configuration
+const ZAI_API_URL = 'https://api.z.ai/api/paas/v4/chat/completions';
+const ZAI_MODEL = 'glm-4.7'; // Latest GLM 4.7 model from ZAI
 
-// Generate response from Gemini
+// Generate response from ZAI API (GLM-4.7)
 export async function generateResponse(prompt, context = {}) {
+  const zaiApiKey = process.env.ZAI_API_KEY;
+  
+  if (!zaiApiKey) {
+    throw new Error('ZAI_API_KEY environment variable is not configured. Please set it in your environment variables.');
+  }
+
   try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    return response.text();
+    const response = await fetch(ZAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${zaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: ZAI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || errorData.message || `HTTP ${response.status}`;
+      
+      console.error('ZAI API error:', errorMessage);
+      
+      if (response.status === 401 || errorMessage?.includes('API_KEY') || errorMessage?.includes('authentication')) {
+        throw new Error('Invalid or missing ZAI API key. Please check your ZAI_API_KEY environment variable.');
+      }
+      if (response.status === 429 || errorMessage?.includes('quota') || errorMessage?.includes('rate limit')) {
+        throw new Error('ZAI API quota exceeded or rate limited. Please try again later.');
+      }
+      
+      throw new Error(`ZAI API error: ${errorMessage}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error('Invalid response format from ZAI API');
+    }
+    
+    return content;
   } catch (error) {
-    console.error('Gemini API error:', error);
-    throw new Error('Failed to generate AI response');
+    console.error('ZAI API error:', error);
+    throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
   }
 }
 

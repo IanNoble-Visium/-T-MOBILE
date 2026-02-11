@@ -1,127 +1,97 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Validate Google API key
-const googleApiKey = process.env.GOOGLE_API_KEY;
-if (!googleApiKey) {
-  console.error('GOOGLE_API_KEY environment variable is not set');
+// ZAI API Configuration
+const ZAI_API_URL = 'https://api.z.ai/api/paas/v4/chat/completions';
+const ZAI_MODEL = 'glm-4.7'; // Latest GLM 4.7 model from ZAI
+
+// Validate ZAI API key
+const zaiApiKey = process.env.ZAI_API_KEY;
+if (!zaiApiKey) {
+  console.error('ZAI_API_KEY environment variable is not set');
 }
 
-// Initialize Gemini AI (latest model) - only if API key exists
-// Valid Gemini model names: gemini-3-pro-preview, gemini-3-flash-preview, gemini-1.5-pro
-let genAI = null;
-let model = null;
-let modelName = null;
-
-if (googleApiKey) {
-  try {
-    genAI = new GoogleGenerativeAI(googleApiKey);
-    // Try latest models first, fallback to stable models
-    const modelOptions = [
-      'gemini-3-pro-preview',  // Latest preview model
-      'gemini-3-flash-preview', // Fast preview model
-      'gemini-1.5-pro',         // Stable production model
-      'gemini-1.5-flash'        // Fast stable model
-    ];
-    
-    // Initialize with first available model (will be validated on first use)
-    modelName = modelOptions[0];
-    model = genAI.getGenerativeModel({ model: modelName });
-    console.log(`Initialized Gemini AI with model: ${modelName}`);
-  } catch (initError) {
-    console.error('Failed to initialize Gemini AI:', initError);
-  }
-}
-
-// Generate response from Gemini
+/**
+ * Generate response from ZAI API (GLM-4.7)
+ */
 export async function generateResponse(prompt, context = {}) {
   // Check if API key is configured
-  if (!googleApiKey) {
-    const errorMsg = 'GOOGLE_API_KEY environment variable is not configured. Please set it in your Vercel environment variables.';
+  if (!zaiApiKey) {
+    const errorMsg = 'ZAI_API_KEY environment variable is not configured. Please set it in your Vercel environment variables.';
     console.error(errorMsg);
     throw new Error(errorMsg);
   }
 
-  // Check if model is initialized
-  if (!model) {
-    const errorMsg = 'Gemini AI model failed to initialize. Please check your GOOGLE_API_KEY.';
-    console.error(errorMsg);
-    throw new Error(errorMsg);
-  }
+  try {
+    const response = await fetch(ZAI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${zaiApiKey}`
+      },
+      body: JSON.stringify({
+        model: ZAI_MODEL,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
 
-  // Try multiple models if the first one fails (model not found, etc.)
-  const modelOptions = [
-    'gemini-3-pro-preview',
-    'gemini-3-flash-preview',
-    'gemini-1.5-pro',
-    'gemini-1.5-flash'
-  ];
-  
-  let lastError = null;
-  
-  for (const tryModelName of modelOptions) {
-    try {
-      // Get model instance (create new if different from current)
-      let modelToUse = model;
-      if (tryModelName !== modelName) {
-        modelToUse = genAI.getGenerativeModel({ model: tryModelName });
-        console.log(`Trying Gemini model: ${tryModelName}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error?.message || errorData.message || `HTTP ${response.status}`;
+      
+      console.error('ZAI API error details:');
+      console.error('- Status:', response.status);
+      console.error('- Status text:', response.statusText);
+      console.error('- Error message:', errorMessage);
+      console.error('- Full error:', JSON.stringify(errorData, null, 2));
+      
+      // Provide specific error messages
+      if (response.status === 401 || errorMessage?.includes('API_KEY') || errorMessage?.includes('authentication')) {
+        throw new Error('Invalid or missing ZAI API key. Please check your ZAI_API_KEY environment variable.');
+      }
+      if (response.status === 429 || errorMessage?.includes('quota') || errorMessage?.includes('rate limit')) {
+        throw new Error('ZAI API quota exceeded or rate limited. Please try again later.');
+      }
+      if (response.status === 400 || errorMessage?.includes('invalid')) {
+        throw new Error(`ZAI API request error: ${errorMessage}`);
       }
       
-      const result = await modelToUse.generateContent(prompt);
-      const response = await result.response;
-      
-      // Update global model reference if we successfully used a different model
-      if (tryModelName !== modelName) {
-        model = modelToUse;
-        modelName = tryModelName;
-        console.log(`Successfully using Gemini model: ${modelName}`);
-      }
-      
-      return response.text();
-    } catch (error) {
-      lastError = error;
-      
-      // If it's a "model not found" error, try next model
-      if (error.message?.includes('not found') || error.message?.includes('404')) {
-        console.warn(`Model ${tryModelName} not available, trying next option...`);
-        continue;
-      }
-      
-      // For other errors, log and break
-      console.error(`Gemini API error with model ${tryModelName}:`);
-      console.error('- Error message:', error.message);
-      console.error('- Error code:', error.code);
-      console.error('- Error status:', error.status);
-      
-      // If it's not a model-not-found error, don't try other models
-      if (!error.message?.includes('not found') && !error.message?.includes('404')) {
-        break;
-      }
+      throw new Error(`ZAI API error: ${errorMessage}`);
     }
+
+    const data = await response.json();
+    
+    // Extract response text from ZAI API response format
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      console.error('Unexpected ZAI API response format:', JSON.stringify(data, null, 2));
+      throw new Error('Invalid response format from ZAI API');
+    }
+    
+    console.log(`Successfully generated response using ZAI GLM-4.7 (${data.usage?.total_tokens || 'unknown'} tokens)`);
+    return content;
+  } catch (error) {
+    // Re-throw if it's already a formatted error
+    if (error.message?.startsWith('ZAI API') || error.message?.startsWith('Invalid') || error.message?.startsWith('ZAI_API_KEY')) {
+      throw error;
+    }
+    
+    // Handle network errors
+    if (error.message?.includes('fetch') || error.message?.includes('network')) {
+      throw new Error('Network error connecting to ZAI API. Please check your internet connection.');
+    }
+    
+    // Generic error with actual message
+    throw new Error(`Failed to generate AI response: ${error.message || 'Unknown error'}`);
   }
-  
-  // If we get here, all models failed
-  console.error('All Gemini models failed. Last error:', lastError);
-  
-  // Provide more specific error messages
-  if (lastError?.message?.includes('API_KEY')) {
-    throw new Error('Invalid or missing Google API key. Please check your GOOGLE_API_KEY environment variable.');
-  }
-  if (lastError?.message?.includes('quota') || lastError?.message?.includes('rate limit')) {
-    throw new Error('Gemini API quota exceeded or rate limited. Please try again later.');
-  }
-  if (lastError?.message?.includes('safety')) {
-    throw new Error('Gemini API blocked the request due to safety filters. Please rephrase your query.');
-  }
-  if (lastError?.message?.includes('not found') || lastError?.message?.includes('404')) {
-    throw new Error('No available Gemini models found. Please check your API access or try again later.');
-  }
-  
-  // Generic error with actual message
-  throw new Error(`Failed to generate AI response: ${lastError?.message || 'Unknown error'}`);
 }
 
 // Convert natural language to SQL query
