@@ -303,7 +303,7 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
         nodeColor={(node) => node.color}
         nodeVal={(node) => node.val}
         nodeThreeObject={nodeThreeObject}
-        nodeThreeObjectExtend={true}
+        nodeThreeObjectExtend={!showIcons}
         linkLabel={(link) => `${link.bandwidth || 'N/A'} Gbps | ${link.latency || 'N/A'}ms | ${link.utilization || 0}%`}
         linkColor={linkColor}
         linkWidth={linkWidth}
