@@ -83,6 +83,53 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
     }
   }, [nodes, showIcons])
 
+  // Transform nodes and edges to 3d-force-graph format
+  const graphData = useMemo(() => {
+    // Convert nodes - add visual properties
+    const graphNodes = nodes.map(node => {
+      const nodeColor = NODE_TYPES[node.type]?.color || '#FFFFFF'
+      const regionColor = REGION_COLORS[node.region] || '#FFFFFF'
+      const isAlarmed = alarmedNodeIds.includes(node.id)
+      const isSelected = selectedNodeId === node.id
+
+      return {
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        region: node.region,
+        status: node.status,
+        capacity: node.capacity,
+        location: node.location,
+        // Visual properties
+        color: isSelected ? '#E20074' : isAlarmed ? '#E4002B' : nodeColor,
+        regionColor,
+        val: Math.max(3, Math.min(15, (node.capacity || 1000) / 100)), // Node size based on capacity
+        isAlarmed,
+        isSelected
+      }
+    })
+
+    // Convert edges - ensure source/target are node IDs
+    const graphLinks = edges.map(edge => {
+      const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source
+      const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target
+      
+      return {
+        source: sourceId,
+        target: targetId,
+        id: edge.id,
+        bandwidth: edge.bandwidth,
+        latency: edge.latency,
+        utilization: edge.utilization,
+        // Visual properties
+        color: edge.utilization > 70 ? '#E4002B' : edge.utilization > 40 ? '#FFB81C' : '#00A651',
+        width: Math.max(1, Math.min(5, (edge.bandwidth || 10) / 20))
+      }
+    })
+
+    return { nodes: graphNodes, links: graphLinks }
+  }, [nodes, edges, alarmedNodeIds, selectedNodeId])
+
   // Apply 3D layout when layout changes
   useEffect(() => {
     if (!fgRef.current || !graphData.nodes.length) return
@@ -205,53 +252,6 @@ const NetworkTopology3D = ({ nodes, edges, onNodeClick, onNodeHover, onNodeLeave
       }
     }
   }, [autoFlyby])
-
-  // Transform nodes and edges to 3d-force-graph format
-  const graphData = useMemo(() => {
-    // Convert nodes - add visual properties
-    const graphNodes = nodes.map(node => {
-      const nodeColor = NODE_TYPES[node.type]?.color || '#FFFFFF'
-      const regionColor = REGION_COLORS[node.region] || '#FFFFFF'
-      const isAlarmed = alarmedNodeIds.includes(node.id)
-      const isSelected = selectedNodeId === node.id
-
-      return {
-        id: node.id,
-        name: node.name,
-        type: node.type,
-        region: node.region,
-        status: node.status,
-        capacity: node.capacity,
-        location: node.location,
-        // Visual properties
-        color: isSelected ? '#E20074' : isAlarmed ? '#E4002B' : nodeColor,
-        regionColor,
-        val: Math.max(3, Math.min(15, (node.capacity || 1000) / 100)), // Node size based on capacity
-        isAlarmed,
-        isSelected
-      }
-    })
-
-    // Convert edges - ensure source/target are node IDs
-    const graphLinks = edges.map(edge => {
-      const sourceId = typeof edge.source === 'object' ? edge.source.id : edge.source
-      const targetId = typeof edge.target === 'object' ? edge.target.id : edge.target
-      
-      return {
-        source: sourceId,
-        target: targetId,
-        id: edge.id,
-        bandwidth: edge.bandwidth,
-        latency: edge.latency,
-        utilization: edge.utilization,
-        // Visual properties
-        color: edge.utilization > 70 ? '#E4002B' : edge.utilization > 40 ? '#FFB81C' : '#00A651',
-        width: Math.max(1, Math.min(5, (edge.bandwidth || 10) / 20))
-      }
-    })
-
-    return { nodes: graphNodes, links: graphLinks }
-  }, [nodes, edges, alarmedNodeIds, selectedNodeId])
 
   // Handle node click — also stop flyby
   const handleNodeClick = useCallback((node) => {
