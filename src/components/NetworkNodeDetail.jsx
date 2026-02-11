@@ -12,8 +12,26 @@ const NetworkNodeDetail = ({ item, itemType = 'node', onClose, alarms = [] }) =>
   const typeInfo = isNode ? NODE_TYPES[item.type] : null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg border border-border max-w-md w-full max-h-[90vh] overflow-y-auto">
+    <>
+      {/* CSS override to ensure modal appears above Leaflet map (z-index ~400-1000) */}
+      <style>{`
+        .network-node-detail-modal {
+          z-index: 9999 !important;
+        }
+        .network-node-detail-modal-backdrop {
+          z-index: 9998 !important;
+        }
+      `}</style>
+      <div 
+        className="network-node-detail-modal-backdrop fixed inset-0 bg-black/50 flex items-center justify-center p-4" 
+        style={{ zIndex: 9998 }}
+        onClick={onClose}
+      >
+        <div 
+          className="network-node-detail-modal bg-card rounded-lg border border-border max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+          style={{ zIndex: 9999 }}
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header */}
         <div className="sticky top-0 bg-card border-b border-border p-4 flex items-start justify-between">
           <div className="flex-1">
@@ -177,6 +195,7 @@ const NetworkNodeDetail = ({ item, itemType = 'node', onClose, alarms = [] }) =>
         </div>
       </div>
     </div>
+    </>
   )
 }
 
